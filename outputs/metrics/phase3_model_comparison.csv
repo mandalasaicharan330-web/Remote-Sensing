@@ -1,0 +1,4 @@
+Model,Macro-F1,Micro-F1,Macro-Precision,Macro-Recall,Exact Match Ratio,Hamming Loss,Test Patches
+M1 (T=0.5),0.5978,0.7403,0.7317,0.5588,0.12,0.2014,100
+M2 (T=0.5),0.711,0.8205,0.7326,0.7036,0.38,0.15,100
+M3 (T=0.5),0.5673,0.7081,0.6894,0.5666,0.05,0.2486,100

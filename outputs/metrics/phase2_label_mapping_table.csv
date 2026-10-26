@@ -1,0 +1,20 @@
+CORINE Label,Mapped Broad Class,Status,Ecological Rationale
+Agro-forestry areas,Agriculture,Mapped,Annual or permanent crops combined with forest tree canopy
+Arable land,Agriculture,Mapped,Regularly cultivated agricultural parcels for annual crops
+"Beaches, dunes, sands",[Unmapped - Bare Natural],Excluded (Documented),Coastal bare mineral/sand surfaces without vegetation (only 0.27% of dataset). Explicitly excluded from the 7 target classes to prevent arbitrary label contamination.
+Broad-leaved forest,Forest,Mapped,Deciduous broad-leaved tree canopy cover > 30%
+Coastal wetlands,Wetland,Mapped,"Salt marshes, salines, and tidal flats"
+Complex cultivation patterns,Agriculture,Mapped,Mosaic of small cultivated parcels with scattered rural dwellings
+Coniferous forest,Forest,Mapped,Evergreen needle-leaved coniferous tree canopy cover > 30%
+Industrial or commercial units,Built-up/Artificial Surfaces,Mapped,"Factories, logistics facilities, commercial zones, and infrastructure"
+Inland waters,Water,Mapped,"Rivers, streams, canals, freshwater lakes, and reservoirs"
+Inland wetlands,Wetland,Mapped,"Inland marshes, peatbogs, and seasonally waterlogged terrain"
+"Land principally occupied by agriculture, with significant areas of natural vegetation",Agriculture,Mapped,Cultivated parcels interspersed with patches of natural vegetation
+Marine waters,Water,Mapped,"Ocean, sea, estuaries, and coastal lagoons"
+Mixed forest,Forest,Mapped,Neither broad-leaved nor coniferous species dominate canopy
+"Moors, heathland and sclerophyllous vegetation",Shrub/Transitional Vegetation,Mapped,"Low shrubby vegetation, heathland, gorse, and maquis"
+Natural grassland and sparsely vegetated areas,Grassland/Pasture,Mapped,Low-productivity unmanaged wild grasslands and open steppe
+Pastures,Grassland/Pasture,Mapped,"Dense, permanently managed herbaceous turf grazed by livestock"
+Permanent crops,Agriculture,Mapped,"Vineyards, orchards, olive groves, and berry plantations"
+"Transitional woodland, shrub",Shrub/Transitional Vegetation,Mapped,"Bushy vegetation, forest clear-cuts, young plantation regrowth"
+Urban fabric,Built-up/Artificial Surfaces,Mapped,"Continuous and discontinuous residential, commercial and urban areas"

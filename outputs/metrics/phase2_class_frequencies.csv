@@ -1,0 +1,8 @@
+Broad Class,Total Count,Train Count,Val Count,Test Count,Class Prevalence (%)
+Forest,86,46,20,20,86.0
+Agriculture,64,34,15,15,64.0
+Grassland/Pasture,82,51,19,12,82.0
+Built-up/Artificial Surfaces,69,47,15,7,69.0
+Water,43,20,10,13,43.0
+Wetland,2,0,2,0,2.0
+Shrub/Transitional Vegetation,0,0,0,0,0.0

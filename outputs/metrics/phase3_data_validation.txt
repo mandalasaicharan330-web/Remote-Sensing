@@ -1,0 +1,139 @@
+================================================================================
+   PHASE 3 DATA VALIDATION AUDIT: PRE-TRAINING DATASET INTEGRITY CHECK
+================================================================================
+Target dataset: data/curated_dataset_phase2_1.npz
+Metadata provenance: data/metadata.parquet
+
+Archive successfully loaded: 500 genuine patches.
+
+[CHECK 1] Array Dimensions, Data Types, and Value Bounds
+  - Images shape: (500, 6, 120, 120) (Expected: (500, 6, 120, 120)) -> PASS
+  - Images dtype: float32 (Expected: float32) -> PASS
+  - Labels shape: (500, 7) (Expected: (500, 7)) -> PASS
+  - Labels dtype: float32 -> PASS
+  - Non-finite elements: NaN=0, Inf=0 -> PASS
+  - Images reflectance range: [0.00010, 1.00000] in [0.0, 1.0] -> PASS
+  - Labels unique values: {0.0, 1.0} (strictly binary multi-hot) -> PASS
+
+[CHECK 2] Exact Band Order & Channel Mapping
+  - Curated band names: ['B02', 'B03', 'B04', 'B08', 'B11', 'B12']
+  - Expected band order: ['B02', 'B03', 'B04', 'B08', 'B11', 'B12']
+  - Band order match: PASS
+  - M1 (Visible RGB) Channels: [0, 1, 2] -> B02, B03, B04
+  - M2 (Visible + NIR) Channels: [0, 1, 2, 3] -> B02, B03, B04, B08
+  - M3 (Full Multispectral) Channels: [0, 1, 2, 3, 4, 5] -> ['B02', 'B03', 'B04', 'B08', 'B11', 'B12']
+
+[CHECK 3] Target Class Scheme & Canonical Column Order
+  - Curated class order: ['Forest', 'Agriculture', 'Grassland/Pasture', 'Built-up/Artificial Surfaces', 'Water', 'Wetland', 'Shrub/Transitional Vegetation']
+  - Canonical class order: ['Forest', 'Agriculture', 'Grassland/Pasture', 'Built-up/Artificial Surfaces', 'Water', 'Wetland', 'Shrub/Transitional Vegetation']
+  - Class order match: PASS
+    Col 0: Forest
+    Col 1: Agriculture
+    Col 2: Grassland/Pasture
+    Col 3: Built-up/Artificial Surfaces
+    Col 4: Water
+    Col 5: Wetland
+    Col 6: Shrub/Transitional Vegetation
+
+[CHECK 4] Patch ID Uniqueness & Official Split Provenance
+  - Total patches: 500, Unique IDs: 500 -> PASS
+  - Official split matches: 500 / 500 (100.0%) -> PASS
+
+[CHECK 5] Partition Disjointness (Zero Data Leakage)
+  - Train count: 300 (300 expected)
+  - Validation count: 100 (100 expected)
+  - Test count: 100 (100 expected)
+  - Overlap Train ∩ Val: 0 -> PASS
+  - Overlap Train ∩ Test: 0 -> PASS
+  - Overlap Val ∩ Test: 0 -> PASS
+
+[CHECK 6] Positive & Negative Support per Class Across All Splits
+                        Class Train Pos (Neg) Val Pos (Neg) Test Pos (Neg)  Total Pos Status
+                       Forest        258 (42)       84 (16)         95 (5)        437   PASS
+                  Agriculture       142 (158)       74 (26)        52 (48)        268   PASS
+            Grassland/Pasture        209 (91)       75 (25)        39 (61)        323   PASS
+ Built-up/Artificial Surfaces       130 (170)       58 (42)        31 (69)        219   PASS
+                        Water        41 (259)       28 (72)        21 (79)         90   PASS
+                      Wetland         8 (292)       16 (84)        27 (73)         51   PASS
+Shrub/Transitional Vegetation        59 (241)       13 (87)        42 (58)        114   PASS
+  - Positive and negative examples present for all 7 classes in all splits: PASS
+
+[CHECK 7] Critical Minority Classes in Training Split
+  - Train Wetland positive examples: 8 / 300 (2.7%)
+  - Train Shrub positive examples: 59 / 300 (19.7%)
+  - Validation Wetland positive examples: 16 / 100 (16.0%) [100% tile max]
+  - Validation Shrub positive examples: 13 / 100 (13.0%) [100% tile max]
+  - Test Wetland positive examples: 27 / 100 (27.0%) [Target >= 20 Met]
+  - Test Shrub positive examples: 42 / 100 (42.0%) [Target >= 20 Met]
+  - Training support check (> 0 positive instances): PASS
+
+[CHECK 8] CORINE Land Cover (19 Classes) Mapping Scheme Audit
+  - Total official BigEarthNet CORINE classes: 19
+    ✓ [MAPPED] 'Agro-forestry areas' -> 'Agriculture'
+    ✓ [MAPPED] 'Arable land' -> 'Agriculture'
+    ! [UNMAPPED] 'Beaches, dunes, sands' -> None (Coastal bare mineral/sand surfaces without vegetation (only 0.27% of dataset). Explicitly excluded from the 7 target classes to prevent arbitrary label contamination.)
+    ✓ [MAPPED] 'Broad-leaved forest' -> 'Forest'
+    ✓ [MAPPED] 'Coastal wetlands' -> 'Wetland'
+    ✓ [MAPPED] 'Complex cultivation patterns' -> 'Agriculture'
+    ✓ [MAPPED] 'Coniferous forest' -> 'Forest'
+    ✓ [MAPPED] 'Industrial or commercial units' -> 'Built-up/Artificial Surfaces'
+    ✓ [MAPPED] 'Inland waters' -> 'Water'
+    ✓ [MAPPED] 'Inland wetlands' -> 'Wetland'
+    ✓ [MAPPED] 'Land principally occupied by agriculture, with significant areas of natural vegetation' -> 'Agriculture'
+    ✓ [MAPPED] 'Marine waters' -> 'Water'
+    ✓ [MAPPED] 'Mixed forest' -> 'Forest'
+    ✓ [MAPPED] 'Moors, heathland and sclerophyllous vegetation' -> 'Shrub/Transitional Vegetation'
+    ✓ [MAPPED] 'Natural grassland and sparsely vegetated areas' -> 'Grassland/Pasture'
+    ✓ [MAPPED] 'Pastures' -> 'Grassland/Pasture'
+    ✓ [MAPPED] 'Permanent crops' -> 'Agriculture'
+    ✓ [MAPPED] 'Transitional woodland, shrub' -> 'Shrub/Transitional Vegetation'
+    ✓ [MAPPED] 'Urban fabric' -> 'Built-up/Artificial Surfaces'
+  - Mapped CORINE classes: 18 / 19
+  - Unmapped CORINE classes: 1 / 19
+  - Verification of unmapped class occurrence in curated dataset:
+    'Beaches, dunes, sands' in curated patches: False (Expected: False for tile T33UUP)
+
+[CHECK 9] Phase 1 Inspection Patch Isolation Audit
+    Phase 1 patch 3UUP_26_57: split='test' (In Train: False, In Val: False)
+    Phase 1 patch 3UUP_27_55: split='test' (In Train: False, In Val: False)
+    Phase 1 patch 3UUP_27_56: split='test' (In Train: False, In Val: False)
+    Phase 1 patch 3UUP_27_57: split='test' (In Train: False, In Val: False)
+    Phase 1 patch 3UUP_27_58: split='test' (In Train: False, In Val: False)
+  - Phase 1 patches in Training: 0 (Must be 0)
+  - Phase 1 patches in Validation: 0 (Must be 0)
+  - Phase 1 patches in Test: 5 (Expected 5)
+  - Inspection patch isolation verified: PASS
+
+[CHECK 10] Geographic and Class-Selection Bias Assessment
+  - Geographic tile provenance: {'T33UUP'} (Tile T33UUP, Austria, Central Alps)
+  - Countries represented: {'Austria'}
+  - Assessment of Geographic Bias:
+    * All 500 patches originate from Sentinel-2 tile T33UUP in Austria.
+    * The regional landscape is characteristic of Central European Alpine and sub-alpine geography:
+      abundant mixed/coniferous forest, managed pastures, valleys with agriculture and human settlements.
+    * Arid, Mediterranean, sub-polar, and coastal wetland ecosystems are not represented in this tile.
+  - Assessment of Class-Selection Bias:
+    * Patches containing rare minority classes (Wetland and Shrub) were exhaustively collected from
+      tile T33UUP to enable multi-label learning without synthetic generation.
+    * Consequently, Wetland and Shrub prevalence in this curated subset (10.2% and 22.8%) is higher
+      than the natural prevalence in the full tile (1.6% and 3.6%). This intentional enrichment
+      ensures models receive gradient signals for minority classes, but training performance must be
+      interpreted recognizing this curated distribution.
+
+================================================================================
+                        FINAL AUDIT SCORECARD
+================================================================================
+  Check 1: Dimensions, Dtypes, Bounds                : [PASSED]
+  Check 2: Exact Band Order                          : [PASSED]
+  Check 3: Seven Target Class Names                  : [PASSED]
+  Check 4: Patch ID Uniqueness & Provenance          : [PASSED]
+  Check 5: Split Disjointness (Zero Leakage)         : [PASSED]
+  Check 6: Pos/Neg Representation per Split          : [PASSED]
+  Check 7: Minority Class Training Counts            : [PASSED]
+  Check 8: 19 CORINE Mapping Audit                   : [PASSED]
+  Check 9: Phase 1 Patch Isolation                   : [PASSED]
+  Check 10: Geographic/Class Bias Documented         : [PASSED]
+================================================================================
+RESULT: ALL 10 DATA VALIDATION CHECKS PASSED WITH ZERO DEFECTS.
+The dataset is strictly certified for Phase 3 training and band ablation.
+================================================================================

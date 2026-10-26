@@ -1,0 +1,8 @@
+class_index,class_name,train_count,train_pct,val_count,val_pct,test_count,test_pct,total_count,total_pct
+0,Forest,258,86.0,84,84.0,95,95.0,437,87.4
+1,Agriculture,142,47.33,74,74.0,52,52.0,268,53.6
+2,Grassland/Pasture,209,69.67,75,75.0,39,39.0,323,64.6
+3,Built-up/Artificial Surfaces,130,43.33,58,58.0,31,31.0,219,43.8
+4,Water,41,13.67,28,28.0,21,21.0,90,18.0
+5,Wetland,8,2.67,16,16.0,27,27.0,51,10.2
+6,Shrub/Transitional Vegetation,59,19.67,13,13.0,42,42.0,114,22.8

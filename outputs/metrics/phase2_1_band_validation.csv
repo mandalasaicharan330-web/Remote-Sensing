@@ -1,0 +1,7 @@
+band_name,description,central_wavelength_nm,native_res_m,native_shape,harmonized_shape,resampling_method,raw_dtype,harmonized_dtype,raw_min_dn,raw_max_dn,refl_min,refl_max,total_pixels_audited,pixels_dn_gt_10000_count,pixels_dn_gt_10000_pct,pixels_dn_lt_0_count,non_finite_count
+B02,Blue (Atmospheric & Water Penetration),490,10,"(120, 120)","(120, 120)",None (Native 10m),uint16,float32,1,17760,0.0001,1.0,7200000,57,0.00079,0,0
+B03,Green (Vegetation Peak Reflectance),560,10,"(120, 120)","(120, 120)",None (Native 10m),uint16,float32,1,16816,0.0001,1.0,7200000,58,0.00081,0,0
+B04,Red (Chlorophyll Absorption),665,10,"(120, 120)","(120, 120)",None (Native 10m),uint16,float32,1,16192,0.0001,1.0,7200000,70,0.00097,0,0
+B08,Broad NIR (Vegetation Biomass / Canopy),842,10,"(120, 120)","(120, 120)",None (Native 10m),uint16,float32,78,15616,0.0078,1.0,7200000,80,0.00111,0,0
+B11,SWIR-1 (Moisture / Soil / Snow Discrimination),1610,20,"(60, 60)","(120, 120)",Bilinear (order=1),uint16,float32,34,15125,0.0035,1.0,1800000,53,0.00294,0,0
+B12,SWIR-2 (Geology / Hydrocarbon / Burn Scars),2190,20,"(60, 60)","(120, 120)",Bilinear (order=1),uint16,float32,9,15063,0.0014,1.0,1800000,75,0.00417,0,0

@@ -1,0 +1,118 @@
+{
+  "metadata": {
+    "description": "Decision thresholds calibrated strictly on validation predictions",
+    "search_range": [
+      0.2,
+      0.8,
+      0.05
+    ],
+    "num_classes": 7,
+    "classes": [
+      "Forest",
+      "Agriculture",
+      "Grassland/Pasture",
+      "Built-up/Artificial Surfaces",
+      "Water",
+      "Wetland",
+      "Shrub/Transitional Vegetation"
+    ]
+  },
+  "models": {
+    "M1": {
+      "default_threshold": 0.5,
+      "tuned_thresholds": {
+        "Forest": 0.3,
+        "Agriculture": 0.2,
+        "Grassland/Pasture": 0.4,
+        "Built-up/Artificial Surfaces": 0.4,
+        "Water": 0.3,
+        "Wetland": 0.5,
+        "Shrub/Transitional Vegetation": 0.2
+      },
+      "val_f1_default_per_class": {
+        "Forest": 0.905,
+        "Agriculture": 0.8201,
+        "Grassland/Pasture": 0.84,
+        "Built-up/Artificial Surfaces": 0.7407,
+        "Water": 0.4444,
+        "Wetland": 0.0,
+        "Shrub/Transitional Vegetation": 0.0
+      },
+      "val_f1_tuned_per_class": {
+        "Forest": 0.9171,
+        "Agriculture": 0.8834,
+        "Grassland/Pasture": 0.8642,
+        "Built-up/Artificial Surfaces": 0.816,
+        "Water": 0.5333,
+        "Wetland": 0.0,
+        "Shrub/Transitional Vegetation": 0.1739
+      },
+      "val_macro_f1_default": 0.5358,
+      "val_macro_f1_tuned": 0.5983
+    },
+    "M2": {
+      "default_threshold": 0.5,
+      "tuned_thresholds": {
+        "Forest": 0.2,
+        "Agriculture": 0.2,
+        "Grassland/Pasture": 0.35,
+        "Built-up/Artificial Surfaces": 0.3,
+        "Water": 0.3,
+        "Wetland": 0.5,
+        "Shrub/Transitional Vegetation": 0.2
+      },
+      "val_f1_default_per_class": {
+        "Forest": 0.904,
+        "Agriculture": 0.7941,
+        "Grassland/Pasture": 0.8571,
+        "Built-up/Artificial Surfaces": 0.807,
+        "Water": 0.7556,
+        "Wetland": 0.0,
+        "Shrub/Transitional Vegetation": 0.0
+      },
+      "val_f1_tuned_per_class": {
+        "Forest": 0.9121,
+        "Agriculture": 0.8805,
+        "Grassland/Pasture": 0.8655,
+        "Built-up/Artificial Surfaces": 0.8372,
+        "Water": 0.7826,
+        "Wetland": 0.0,
+        "Shrub/Transitional Vegetation": 0.3478
+      },
+      "val_macro_f1_default": 0.5883,
+      "val_macro_f1_tuned": 0.6608
+    },
+    "M3": {
+      "default_threshold": 0.5,
+      "tuned_thresholds": {
+        "Forest": 0.45,
+        "Agriculture": 0.3,
+        "Grassland/Pasture": 0.45,
+        "Built-up/Artificial Surfaces": 0.45,
+        "Water": 0.2,
+        "Wetland": 0.5,
+        "Shrub/Transitional Vegetation": 0.2
+      },
+      "val_f1_default_per_class": {
+        "Forest": 0.9171,
+        "Agriculture": 0.8286,
+        "Grassland/Pasture": 0.8606,
+        "Built-up/Artificial Surfaces": 0.7863,
+        "Water": 0.25,
+        "Wetland": 0.0,
+        "Shrub/Transitional Vegetation": 0.0
+      },
+      "val_f1_tuned_per_class": {
+        "Forest": 0.918,
+        "Agriculture": 0.8795,
+        "Grassland/Pasture": 0.8721,
+        "Built-up/Artificial Surfaces": 0.8031,
+        "Water": 0.6753,
+        "Wetland": 0.0,
+        "Shrub/Transitional Vegetation": 0.3871
+      },
+      "val_macro_f1_default": 0.5204,
+      "val_macro_f1_tuned": 0.6479
+    }
+  }
+}
