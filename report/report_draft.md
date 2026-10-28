@@ -151,58 +151,68 @@ To isolate spectral band utility, three models were trained under identical seed
 ## 5. Experimental Results
 
 ### 5.1 Quantitative Performance Summary
-The models were evaluated on the independent test set. Per-class Precision, Recall, F1-score, and Macro-averaged F1 are summarized below:
+The models were evaluated on the independent test set ($N=100$) using the verified metrics recorded in `outputs/metrics/phase3_model_comparison.csv` and `outputs/metrics/phase3_per_class_metrics.csv`.
 
-| Land-Cover Class | $M_1$ (RGB) F1 | $M_2$ (RGB+NIR) F1 | $M_3$ (All Bands) F1 | NIR Gain ($\Delta$ pp) | SWIR Gain ($\Delta$ pp) | Total Gain ($\Delta$ pp) |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Forest** | 0.8124 | 0.8950 | 0.9215 | +8.26 | +2.65 | **+10.91** |
-| **Agriculture** | 0.7431 | 0.8260 | 0.8540 | +8.29 | +2.80 | **+11.09** |
-| **Grassland / Pasture** | 0.5820 | 0.6945 | 0.7380 | +11.25 | +4.35 | **+15.60** |
-| **Built-up** | 0.6210 | 0.6780 | 0.7425 | +5.70 | +6.45 | **+12.15** |
-| **Water** | 0.7850 | 0.9410 | 0.9520 | +15.60 | +1.10 | **+16.70** |
-| **Wetland** | 0.4610 | 0.5620 | 0.6280 | +10.10 | +6.60 | **+16.70** |
-| **Shrub / Transitional** | 0.5340 | 0.6410 | 0.6975 | +10.70 | +5.65 | **+16.35** |
-| **Macro Average** | **0.6484** | **0.7482** | **0.7905** | **+9.98** | **+4.23** | **+14.21** |
+#### Overall Model Comparison on Test Set
+| Evaluation Protocol | Model Identifier | Macro-F1 | Micro-F1 | Macro-Precision | Macro-Recall | Exact Match Ratio | Hamming Loss |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Standard ($T=0.50$)** | **$M_1$ (Visible RGB)** | 0.5978 | 0.7403 | 0.7317 | 0.5588 | 12.0% | 0.2014 |
+| **Standard ($T=0.50$)** | **$M_2$ (Visible + NIR)** | **0.7110** | **0.8205** | **0.7326** | **0.7036** | **38.0%** | **0.1500** |
+| **Standard ($T=0.50$)** | **$M_3$ (Multispectral)** | 0.5673 | 0.7081 | 0.6894 | 0.5666 | 5.0% | 0.2486 |
+| *Validation-Tuned* | $M_1$ (Tuned Thresholds) | 0.7076 | 0.8024 | 0.6648 | 0.7868 | 9.0% | 0.1857 |
+| *Validation-Tuned* | $M_2$ (Tuned Thresholds) | 0.7020 | 0.7928 | 0.6566 | 0.7886 | 7.0% | 0.1971 |
+| *Validation-Tuned* | $M_3$ (Tuned Thresholds) | 0.6559 | 0.7692 | 0.5939 | 0.7645 | 6.0% | 0.2229 |
+
+#### Per-Class F1-Score Breakdown ($T = 0.50$)
+| Land-Cover Class | $M_1$ (RGB) F1 | $M_2$ (RGB+NIR) F1 | $M_3$ (All Bands) F1 | Support | Best Model |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Forest** | 0.9688 | 0.9738 | **0.9741** | 95 | $M_3$ / $M_2$ |
+| **Agriculture** | 0.7727 | **0.8387** | 0.7826 | 52 | **$M_2$** |
+| **Grassland / Pasture** | 0.7609 | **0.7872** | 0.5672 | 39 | **$M_2$** |
+| **Built-up / Artificial** | **0.5862** | 0.5714 | 0.5574 | 31 | **$M_1$** |
+| **Water** | 0.7429 | **0.8947** | 0.4444 | 21 | **$M_2$** |
+| **Wetland** | **0.0000** | **0.0000** | **0.0000** | 27 | Tied (0 TP) |
+| **Shrub / Transitional** | 0.3529 | **0.9114** | 0.6452 | 42 | **$M_2$** |
+| **Macro Average** | **0.5978** | **0.7110** | **0.5673** | 307 | **$M_2$** |
 
 ### 5.2 Key Takeaways from Band Contributions
-1. **The Critical Role of NIR ($B8$):** Adding NIR provided an immediate $+9.98$ percentage point surge in Macro-F1. Water recognition jumped by $+15.60$ pp because water completely absorbs NIR wavelengths, contrasting sharply with all terrestrial surfaces. Vegetation classes (Forest, Agriculture, Grassland) gained $8 - 11$ pp due to cell-structure scattering along the red-edge plateau.
-2. **The Refinement of SWIR ($B11, B12$):** SWIR contributed an additional $+4.23$ percentage points. The most pronounced improvements were observed in **Built-up** ($+6.45$ pp), **Wetland** ($+6.60$ pp), and **Shrub/Transitional** ($+5.65$ pp). SWIR radiation is uniquely sensitive to surface moisture gradients and mineral absorption, allowing the network to decouple damp soils from impervious built roofs.
+1. **The Decisive Role of NIR ($B8$):** Adding NIR provided an immediate **+11.32 percentage point increase** in Macro-F1 at $T=0.5$ (0.5978 to 0.7110), while Micro-F1 reached 0.8205 and the Exact Match subset accuracy more than tripled from 12.0% to 38.0%. Shrub/Transitional Vegetation F1 surged from 0.3529 to 0.9114 (+55.85 pp) due to mesophyll scattering differences between open scrub and mature forest canopy. Water F1 jumped from 0.7429 to 0.8947 with 100% precision.
+2. **Behavior of SWIR ($B11, B12$):** On our curated 300-patch training split, $M_3$ achieved a Macro-F1 of 0.5673, performing worse than $M_2$. Expanding input channels to 6 without large-scale pretraining induced overfitting and severe commission errors on Grassland/Pasture (57 False Positives; precision 40.0%). This experiment demonstrates that on small sample sizes, increased spectral dimensionality can degrade generalization unless adequate regularization or transfer learning is applied.
 
 ---
 
 ## 6. Error and Co-Occurrence Analysis
 
 ### 6.1 Diagnostic Breakdown of Test Predictions
-Test set predictions on $M_3$ demonstrate:
-- **Exact Matches (All labels correct):** ~68% of test patches had perfectly identical binary label vectors to ground truth.
-- **Partial Over-Prediction (False Extra Labels):** ~18% of patches predicted a minor subordinate class that was not officially annotated in CLC2018 (often low-density scrub along woodland edges).
-- **Missed Labels (False Negatives):** ~14% of patches missed a secondary class covering only a negligible fraction of the patch area.
+Test set predictions at $T=0.50$ demonstrate:
+- **Exact Match Ratio:** **38.0%** in $M_2$, **12.0%** in $M_1$, and **5.0%** in $M_3$.
+- **Grassland Commission Errors in $M_3$:** $M_3$ predicted Grassland in 95 out of 100 test patches, generating 57 false alarms.
+- **Wetland Classification Limitation (0.0000 F1):** All three models failed to detect any of the 27 positive Wetland patches at $T=0.50$. In tile `T33UUP`, the training split furnished only **8 positive Wetland patches out of 300** (2.7% prevalence). Under unweighted BCE loss, the network output negative logits for Wetland ($z \in [-3.5, -0.8]$) to avoid false-alarm penalties on the 292 negative training patches.
 
 ### 6.2 Analysis of Confusing Class Combinations
 
 #### Case 1: Agriculture $\leftrightarrow$ Grassland / Pasture
-- **Ecological Overlap:** In agricultural landscapes, cultivated forage crops, fallow arable parcels, and permanent pastures share similar green leaf pigments and visual texture.
-- **Spectral Separation:** In visible wavelengths, both exhibit nearly identical green peaks and red absorption troughs. NIR reflectance separates vigorously fertilized crops from grazed pastures, but during dry seasons or harvest, arable soil exposure mimics sparse grassland. SWIR moisture sensitivity partially alleviates this confusion by detecting tilled soil moisture vs. intact pasture root systems.
+- **Ecological Overlap:** Cultivated forage crops, fallow fields, and permanent pastures share similar herbaceous vegetative signatures.
+- **Spectral Separation:** In visible wavelengths, both exhibit nearly identical green peaks and red absorption troughs. In $M_1$ and $M_2$, exactly 18 patches were falsely classified as Grassland.
 
 #### Case 2: Forest $\leftrightarrow$ Transitional Woodland / Shrub
-- **Ecological Overlap:** Transitional vegetation represents an ecotone or successional stage between open grassland and mature forest (e.g., young tree plantations, clear-cuts with regrowth, heathland).
-- **Spectral Separation:** In pure stands, mature forests exhibit a darker visible canopy due to deep structural shadowing and high NIR biomass. However, mixed pixels at patch boundaries create intermediate reflectance values that the model occasionally classifies as Transitional Vegetation rather than Mixed Forest.
+- **Ecological Overlap:** Transitional vegetation represents an ecotone between open grassland and mature forest (young saplings, clear-cut regrowth).
+- **Spectral Separation:** In visible bands, scrub mimics dense forest greenness ($M_1$ F1=0.3529). In NIR, canopy micro-shadowing in mature forests attenuates reflectance relative to open multi-tiered scrub, enabling $M_2$ to successfully resolve 36 of 42 shrub instances ($M_2$ F1=0.9114).
 
 ---
 
 ## 7. Conclusions and Limitations
 
 ### 7.1 Conclusions
-1. Sentinel-2 multispectral observations successfully recognize multiple land-cover categories within a single satellite patch, corroborating the validity of multi-label deep learning for remote sensing.
-2. Spectral contribution is heavily hierarchical:
-   $$\text{RGB} \xrightarrow{+10.0\text{ pp}} \text{RGB+NIR} \xrightarrow{+4.2\text{ pp}} \text{RGB+NIR+SWIR}$$
-3. Near-Infrared ($B8$) provides the decisive signal for vegetation canopy and water boundary separation. Short-Wave Infrared ($B11, B12$) provides the necessary diagnostic leverage to resolve built-up, wetland, and scrubland ecotones.
-4. Validation threshold tuning is critical for multi-label recognition to mitigate class imbalance effects.
+1. Sentinel-2 multispectral observations successfully recognize multiple land-cover categories within a single satellite patch, corroborating the validity of multi-label deep learning.
+2. Near-Infrared ($B8$) provides the decisive performance boost, elevating Macro-F1 by +11.32 pp and tripling Exact Match accuracy.
+3. $M_2$ performed best on this curated test set. $M_3$ underperformed $M_2$ on our 300-patch training split, illustrating that adding SWIR on small sample sizes can cause overfitting.
+4. Extreme class imbalance (8 Wetland patches) causes zero-recall failure under unweighted BCE loss.
 
 ### 7.2 Practical Limitations & Future Improvements
-- **Spatial Resolution Mismatch:** The native $20\text{ m}$ resolution of SWIR bands was harmonized via bilinear resampling. While effective, super-resolution neural networks could enhance SWIR edge fidelity.
-- **Spatial Context:** A standard CNN classifies entire patches globally. Combining scene-level multi-label classification with pixel-level semantic segmentation (using BigEarthNet's reference maps) represents a natural next stage.
-- **Multi-Modal Extension:** BigEarthNet also provides Sentinel-1 dual-polarization SAR ($VV, VH$). Fusing SAR backscatter would provide cloud-penetrating structural texture to further resolve urban vs. bare soil ambiguities.
+- **Single-Tile Geographic Scope:** All 500 patches originate from Tile `T33UUP` in the Austrian Central Alps. Findings cannot be claimed to generalize to Mediterranean, Scandinavian, or arid biomes.
+- **Class-Selection Bias:** Capturing 100% of the tile's Wetland and Shrub patches enriched their prevalence (10.2% and 22.8%) relative to natural landscape baselines (1.6% and 3.6%).
+- **Future Improvements:** Implement positive-class loss weighting ($w_{\text{pos}} = N_{\text{neg}} / N_{\text{pos}}$) or Focal Loss to recover rare wetlands, and apply transfer learning from continental-scale archives.
 
 ---
 ## References

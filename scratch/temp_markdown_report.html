@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Technical Report: Multi-Label Land-Cover Recognition Using Sentinel-2 Multispectral Classification</title>
+<style>
+@page {
+    size: A4 portrait;
+    margin: 18mm 18mm 18mm 18mm;
+    @bottom-right {
+        content: counter(page);
+    }
+}
+* {
+    box-sizing: border-box;
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 9.5pt;
+    line-height: 1.45;
+    color: #1e293b;
+    margin: 0;
+    padding: 0;
+}
+h1 {
+    font-size: 18pt;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.25;
+    margin-top: 0;
+    margin-bottom: 8pt;
+    border-bottom: 2pt solid #1e40af;
+    padding-bottom: 6pt;
+}
+h2 {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #1e40af;
+    border-bottom: 1.5pt solid #cbd5e1;
+    padding-bottom: 3pt;
+    margin-top: 14pt;
+    margin-bottom: 7pt;
+    break-after: avoid;
+}
+h3 {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #0f766e;
+    margin-top: 10pt;
+    margin-bottom: 4pt;
+    break-after: avoid;
+}
+h4 {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #334155;
+    margin-top: 8pt;
+    margin-bottom: 3pt;
+    break-after: avoid;
+}
+p {
+    margin-top: 0;
+    margin-bottom: 7pt;
+    text-align: justify;
+}
+ul, ol {
+    margin-top: 0;
+    margin-bottom: 7pt;
+    padding-left: 18pt;
+}
+li {
+    margin-bottom: 3.5pt;
+}
+hr {
+    border: none;
+    border-top: 1pt solid #e2e8f0;
+    margin: 12pt 0;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 6pt;
+    margin-bottom: 9pt;
+    font-size: 8.5pt;
+}
+th, td {
+    border: 0.75pt solid #cbd5e1;
+    padding: 4.5pt 6pt;
+    text-align: left;
+}
+th {
+    background-color: #1e40af;
+    color: #ffffff;
+    font-weight: 600;
+}
+tr:nth-child(even) td {
+    background-color: #f8fafc;
+}
+code {
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 8.5pt;
+    background-color: #f1f5f9;
+    padding: 1pt 3pt;
+    border-radius: 2pt;
+    color: #0f766e;
+}
+pre {
+    background-color: #f8fafc;
+    border: 0.75pt solid #e2e8f0;
+    border-radius: 4pt;
+    padding: 6pt 9pt;
+    font-size: 8pt;
+    line-height: 1.35;
+    margin-top: 4pt;
+    margin-bottom: 8pt;
+    font-family: "Consolas", monospace;
+}
+.math-eq {
+    background: #f8fafc;
+    border: 0.5pt solid #e2e8f0;
+    padding: 5pt 10pt;
+    border-radius: 3pt;
+    text-align: center;
+    font-family: "Cambria Math", "Times New Roman", serif;
+    font-size: 10pt;
+    margin: 7pt 0;
+}
+.inline-math {
+    font-family: "Cambria Math", "Times New Roman", serif;
+    font-size: 9.5pt;
+}
+blockquote {
+    border-left: 3pt solid #1e40af;
+    padding-left: 8pt;
+    margin: 6pt 0;
+    color: #475569;
+    background-color: #f8fafc;
+    padding-top: 4pt;
+    padding-bottom: 4pt;
+}
+/* Page break rules for clean layout */
+h2#section-2, h2:has(+ h3) {
+    break-before: auto;
+}
+</style>
+</head>
+<body>
+<h1>Technical Report: Multi-Label Land-Cover Recognition Using Sentinel-2 Multispectral Classification on the BigEarthNet Dataset</h1>
+<p><strong>Author:</strong> Mandala Sai Charan<br />
+<strong>Admission No.:</strong> 24JE1093<br />
+<strong>Course:</strong> Remote Sensing Practical (Project 6)<br />
+<strong>Dataset Reference:</strong> BigEarthNet v2.0 (<em>reBEN</em>), TU Berlin<br />
+<strong>Date:</strong> October 26, 2026<br />
+<strong>Status:</strong> Certified &amp; Verified (<code>verify_phase4.py</code> Passed with Exit Code 0)</p>
+<hr />
+<h2>Abstract</h2>
+<p>Land-cover mapping is a foundational pillar of earth observation, environmental monitoring, agricultural assessment, and spatial planning. In heterogeneous natural and anthropogenic terrains, satellite image footprints frequently encompass multiple surface categories simultaneously (e.g., agricultural fields bordered by woodlots, or rivers traversing rural settlements). Conventional single-label classification assigns an exclusive category to each scene, fundamentally misrepresenting mixed landscapes. In this project, we implement and evaluate a multi-label remote sensing classification framework using Sentinel-2 multispectral imagery from the benchmark BigEarthNet v2.0 (<em>reBEN</em>) archive. </p>
+<p>We curated and verified a 500-patch genuine dataset originating from Sentinel-2 tile <code>T33UUP</code> in the Austrian Central Alps, strictly partitioned into official, disjoint splits: <strong>300 Training</strong>, <strong>100 Validation</strong>, and <strong>100 Test</strong> patches. We retained six strategically chosen diagnostic spectral bands: Blue (<span class="inline-math">B02</span>), Green (<span class="inline-math">B03</span>), Red (<span class="inline-math">B04</span>), Near-Infrared (<span class="inline-math">B08</span>), and Shortwave-Infrared (<span class="inline-math">B11, B12</span>). The <span class="inline-math">20\text{ m}</span> SWIR bands were harmonized to <span class="inline-math">10\text{ m}</span> (<span class="inline-math">120 &times; 120</span> pixels) using bilinear interpolation, and all bands were radiometrically converted to physical Bottom-Of-Atmosphere (BOA) surface reflectance in <span class="inline-math">[0.0, 1.0]</span>. </p>
+<p>We trained a regularized 4-block Convolutional Neural Network (<code>MultispectralCNN</code>, ~617k parameters) under <code>BCEWithLogitsLoss</code> and conducted a controlled <strong>Band Ablation Experiment</strong> comparing:<br />
+- <strong><span class="inline-math"><i>M</i><sub>1</sub></span> (Visible RGB):</strong> Bands <span class="inline-math">B02, B03, B04</span> (3 input channels)<br />
+- <strong><span class="inline-math"><i>M</i><sub>2</sub></span> (Visible + NIR):</strong> Bands <span class="inline-math">B02, B03, B04, B08</span> (4 input channels)<br />
+- <strong><span class="inline-math"><i>M</i><sub>3</sub></span> (Full Multispectral):</strong> Bands <span class="inline-math">B02, B03, B04, B08, B11, B12</span> (6 input channels)</p>
+<p>At the standard decision threshold (<span class="inline-math"><i>T</i> = 0.50</span>), <strong><span class="inline-math"><i>M</i><sub>2</sub></span> achieved the highest overall performance</strong>, recording a test <strong>Macro-F1 of 0.7110</strong>, <strong>Micro-F1 of 0.8205</strong>, and <strong>Exact Match subset accuracy of 38.0%</strong>, significantly outperforming baseline <span class="inline-math"><i>M</i><sub>1</sub></span> (<strong>Macro-F1 of 0.5978</strong>, <strong>Micro-F1 of 0.7403</strong>, Exact Match 12.0%). Adding NIR (<span class="inline-math">B08</span>) provided an immediate <strong>+11.32 percentage point gain</strong> in Macro-F1, critically resolving canopy-density confusion (<em>Shrub/Transitional Vegetation</em> F1 surged from 0.3529 to 0.9114) and sharply elevating <em>Water</em> F1 from 0.7429 to 0.8947 with 100% precision. </p>
+<p>Conversely, <strong><span class="inline-math"><i>M</i><sub>3</sub></span> underperformed <span class="inline-math"><i>M</i><sub>2</sub></span></strong>, recording a test <strong>Macro-F1 of 0.5673</strong>, <strong>Micro-F1 of 0.7081</strong>, and <strong>Exact Match ratio of 5.0%</strong> (<span class="inline-math"><i>T</i> = 0.50</span>). When decision thresholds were calibrated on the validation set, test Macro-F1 values were <strong>0.7076 (<span class="inline-math"><i>M</i><sub>1</sub></span>)</strong>, <strong>0.7020 (<span class="inline-math"><i>M</i><sub>2</sub></span>)</strong>, and <strong>0.6559 (<span class="inline-math"><i>M</i><sub>3</sub></span>)</strong>. On our 300-patch training split, adding two <span class="inline-math">20\text{ m}</span> resampled SWIR channels expanded input dimensionality without sufficient sample support, leading to optimization instability and severe false-positive over-prediction for <em>Grassland/Pasture</em> (57 false positives; precision 40.0%). Furthermore, all three models recorded <strong>0.0000 F1 on Wetland</strong> at <span class="inline-math"><i>T</i> = 0.50</span> (0 true positives out of 27 test instances) because only 8 positive Wetland patches existed in the training split (2.7% prevalence). We discuss these findings in terms of remote sensing physics, small-sample dimensionality trade-offs, and multi-label threshold calibration.</p>
+<hr />
+<h2>1. Introduction</h2>
+<h3>1.1 The Imperative for Satellite Land-Cover Mapping</h3>
+<p>Automated, high-fidelity land-use and land-cover (LULC) identification from spaceborne platforms is essential for quantifying environmental change, assessing crop phenology, modeling hydrological basins, and monitoring deforestation. Modern multispectral instruments, notably the European Space Agency's (ESA) Sentinel-2 constellation, provide global systematic coverage with 5-day revisit frequencies, offering 10 m and 20 m spatial resolutions across visible, near-infrared (NIR), and shortwave-infrared (SWIR) wavelengths.</p>
+<h3>1.2 Limitations of Single-Label Classification</h3>
+<p>In conventional remote sensing classification, each observation unit (pixel, polygon, or spatial tile) is forced into a single mutually exclusive category:</p>
+<div class="math-eq">y &isin; \{1, 2, ..., K\}</div>
+<p>However, at standard satellite patch footprints (<span class="inline-math">1.2\text{ km} &times; 1.2\text{ km}</span>, corresponding to <span class="inline-math">120 &times; 120</span> pixels at <span class="inline-math">10\text{ m}</span> resolution), genuine landscapes are intrinsically heterogeneous mosaics. A single patch frequently contains cultivated arable fields bordering woodlots, alpine pastures framing stream channels, and rural built-up settlements. Single-label classification arbitrarily suppresses subordinate classes or fails on mixed pixels.</p>
+<h3>1.3 Multi-Label Formulation</h3>
+<p>To model landscape complexity without artificial mutual exclusivity, the ground truth for each patch is structured as a binary multi-hot vector:</p>
+<div class="math-eq"><b>y</b> = [y_1, y_2, ..., y_K]^<sup>T</sup> &isin; \{0, 1\}^K</div>
+<p>where <span class="inline-math">y_k = 1</span> denotes the confirmed presence of land-cover category <span class="inline-math">k</span>, and <span class="inline-math">y_k = 0</span> denotes its absence. Under this formulation, multiple surface types can legitimately evaluate to 1 simultaneously. In our curated dataset, <strong>82.0% of patches contain <span class="inline-math">&ge; 2</span> co-occurring classes</strong> (mean: 3.08 classes per patch).</p>
+<h3>1.4 Central Research Questions</h3>
+<ol>
+<li><em>Can visible, NIR, and SWIR observations accurately identify multiple co-occurring surface types in complex landscapes?</em></li>
+<li><em>Does adding NIR (<span class="inline-math">B08</span>) and SWIR (<span class="inline-math">B11, B12</span>) consistently improve classification accuracy over standard visible RGB, and how does spectral dimensionality interact with small training sample sizes?</em></li>
+</ol>
+<hr />
+<h2>2. Dataset and Spectral Bands</h2>
+<h3>2.1 The BigEarthNet v2.0 (<em>reBEN</em>) Dataset</h3>
+<p>We utilize the open-access BigEarthNet v2.0 benchmark archive (Clasen et al., 2024; Sumbul et al., 2019, 2021; <a href="https://bigearth.net/">bigearth.net</a>), released by the Remote Sensing Image Analysis (RSiM) and DIMA groups at Technische Universität Berlin. BigEarthNet v2.0 represents a major scientific upgrade over v1.0:<br />
+- <strong>Atmospheric Correction:</strong> All Sentinel-2 tiles are processed to Level-2A Bottom-Of-Atmosphere (BOA) surface reflectance via <code>sen2cor v2.11</code>.<br />
+- <strong>Label Integrity:</strong> Ground truth labels were re-extracted using the CORINE Land Cover 2018 database (<code>CLC2018 v2020_u1</code>).<br />
+- <strong>Official Splits:</strong> Partitions are assigned across geographic tiles to prevent spatial autocorrelation leakage.</p>
+<h3>2.2 Geographic Provenance &amp; Dataset Partitions</h3>
+<p>To enable rigorous, fully reproducible model training and Colab compatibility without downloading the prohibitive 59 GiB archive, we curated a genuine 500-patch dataset from the first tile in BigEarthNet: <strong>Tile <code>T33UUP</code></strong>, situated in the <strong>Austrian Central Alps</strong> (UTM Zone 33N).<br />
+- <strong>Landscape Context:</strong> Alpine and sub-alpine topography (coniferous and mixed forests, managed pastures, agricultural valleys, settlements, mountain streams).<br />
+- <strong>Official Split Assignments:</strong><br />
+  - <strong>Training Split:</strong> 300 patches (60.0%)<br />
+  - <strong>Validation Split:</strong> 100 patches (20.0%)<br />
+  - <strong>Test Split:</strong> 100 patches (20.0%)<br />
+- <strong>Zero Leakage:</strong> Strictly disjoint partitions (<span class="inline-math">\text{Train} \cap \text{Val} = 0</span>, <span class="inline-math">\text{Train} \cap \text{Test} = 0</span>, <span class="inline-math">\text{Val} \cap \text{Test} = 0</span>).<br />
+- <strong>Inspection Patch Protocol:</strong> All 5 Phase 1 inspection patches (<code>T33UUP_26_57</code>, <code>T33UUP_27_55</code>, <code>T33UUP_27_56</code>, <code>T33UUP_27_57</code>, <code>T33UUP_27_58</code>) reside strictly in the Test split.<br />
+- <strong>Single-Tile Geographic Scope:</strong> Because all 500 patches originate from tile <code>T33UUP</code>, this study evaluates spectral ablation and multi-label modeling under regional conditions; it does not test inter-tile or cross-continental transfer.</p>
+<h3>2.3 Retained Sentinel-2 Diagnostic Bands</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Band</th>
+<th style="text-align: left;">Spectral Region</th>
+<th style="text-align: center;">Central <span class="inline-math">\lambda</span></th>
+<th style="text-align: center;">Bandwidth</th>
+<th style="text-align: center;">Native Res.</th>
+<th style="text-align: center;">Grid Shape (<span class="inline-math">1.2\text{ km}</span>)</th>
+<th style="text-align: left;">Primary Spectroradiometric Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><strong>B02</strong></td>
+<td style="text-align: left;">Blue</td>
+<td style="text-align: center;">490 nm</td>
+<td style="text-align: center;">65 nm</td>
+<td style="text-align: center;">10 m</td>
+<td style="text-align: center;"><span class="inline-math">120 &times; 120</span></td>
+<td style="text-align: left;">Atmospheric penetration; water body clarity; soil vs vegetation contrast</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>B03</strong></td>
+<td style="text-align: left;">Green</td>
+<td style="text-align: center;">560 nm</td>
+<td style="text-align: center;">35 nm</td>
+<td style="text-align: center;">10 m</td>
+<td style="text-align: center;"><span class="inline-math">120 &times; 120</span></td>
+<td style="text-align: left;">Chlorophyll green reflectance peak; general vegetative vigor</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>B04</strong></td>
+<td style="text-align: left;">Red</td>
+<td style="text-align: center;">665 nm</td>
+<td style="text-align: center;">30 nm</td>
+<td style="text-align: center;">10 m</td>
+<td style="text-align: center;"><span class="inline-math">120 &times; 120</span></td>
+<td style="text-align: left;">Chlorophyll-a absorption maximum; defines base of red-edge</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>B08</strong></td>
+<td style="text-align: left;">Near-Infrared (NIR)</td>
+<td style="text-align: center;">842 nm</td>
+<td style="text-align: center;">115 nm</td>
+<td style="text-align: center;">10 m</td>
+<td style="text-align: center;"><span class="inline-math">120 &times; 120</span></td>
+<td style="text-align: left;">Leaf spongy mesophyll scattering (vegetation plateau); water absorption</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>B11</strong></td>
+<td style="text-align: left;">Shortwave Infrared-1</td>
+<td style="text-align: center;">1610 nm</td>
+<td style="text-align: center;">90 nm</td>
+<td style="text-align: center;">20 m</td>
+<td style="text-align: center;"><span class="inline-math">60 &times; 60 \to 120 &times; 120</span></td>
+<td style="text-align: left;">Foliar moisture absorption; soil moisture; built-up roof differentiation</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>B12</strong></td>
+<td style="text-align: left;">Shortwave Infrared-2</td>
+<td style="text-align: center;">2190 nm</td>
+<td style="text-align: center;">180 nm</td>
+<td style="text-align: center;">20 m</td>
+<td style="text-align: center;"><span class="inline-math">60 &times; 60 \to 120 &times; 120</span></td>
+<td style="text-align: left;">Mineral background; dry non-photosynthetic biomass; soil silica</td>
+</tr>
+</tbody>
+</table>
+<p>Input tensors are structured as <span class="inline-math"><b>X</b> &isin; &Ropf;^{C &times; 120 &times; 120}</span>, where <span class="inline-math">C &isin; {3, 4, 6}</span>.</p>
+<hr />
+<h2>3. Seven-Class Land-Cover Scheme and CORINE Label Mapping</h2>
+<p>The 19 official CORINE Land Cover (CLC) classes in BigEarthNet v2.0 are mapped into <strong>7 broad canonical classes</strong>:</p>
+<pre><code>Col 0: Forest
+Col 1: Agriculture
+Col 2: Grassland/Pasture
+Col 3: Built-up/Artificial Surfaces
+Col 4: Water
+Col 5: Wetland
+Col 6: Shrub/Transitional Vegetation
+</code></pre>
+<h3>Complete CORINE Land Cover Mapping Table</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Original CORINE Land Cover Label</th>
+<th style="text-align: left;">Mapped Broad Class</th>
+<th style="text-align: center;">Status</th>
+<th style="text-align: left;">Spectroradiometric &amp; Ecological Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Broad-leaved forest</td>
+<td style="text-align: left;"><strong>Forest</strong></td>
+<td style="text-align: center;">Mapped</td>
+<td style="text-align: left;">Deciduous broad-leaved tree canopy cover <span class="inline-math">&gt; 30\%</span>.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Coniferous forest</td>
+<td style="text-align: left;"><strong>Forest</strong></td>
+<td style="text-align: center;">Mapped</td>
+<td style="text-align: left;">Evergreen needle-leaved tree canopy cover <span class="inline-math">&gt; 30\%</span>.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Mixed forest</td>
+<td style="text-align: left;"><strong>Forest</strong></td>
+<td style="text-align: center;">Mapped</td>
+<td style="text-align: left;">Mosaic where neither broad-leaved nor needle-leaved dominates.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Arable land</td>
+<td style="text-align: left;"><strong>Agriculture</strong></td>
+<td style="text-align: center;">Mapped</td>
+<td style="text-align: left;">Regularly cultivated parcels for annual crop production.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Permanent crops</td>
+<td style="text-align: left;"><strong>Agriculture</strong></td>
+<td style="text-align: center;">Mapped</td>
+<td style="text-align: left;">Vineyards, orchards, fruit trees, and berry plantations.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Complex cultivation patterns</td>
+<td style="text-align: left;"><strong>Agriculture</strong></td>
+<td style="text-align: center;">Mapped</td>
+<td style="text-align: left;">Small cultivated parcels interspersed with rural dwellings.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Land principally occupied by agriculture, natural veg.</td>
+<td style="text-align: left;"><strong>Agriculture</strong></td>
+<td style="text-align: center;">Mapped</td>
+<td style="text-align: left;">Farmland interspersed with significant natural woodland patches.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Agro-forestry areas</td>
+<td style="text-align: left;"><strong>Agriculture</strong></td>
+<td style="text-align: center;">Mapped</td>
+<td style="text-align: left;">Annual crops or pasture combined with forest trees.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Pastures</td>
+<td style="text-align: left;"><strong>Grassland/Pasture</strong></td>
+<td style="text-align: center;">Mapped</td>
+<td style="text-align: left;">Managed perennial herbaceous cover grazed by livestock.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Natural grassland and sparsely vegetated areas</td>
+<td style="text-align: left;"><strong>Grassland/Pasture</strong></td>
+<td style="text-align: center;">Mapped</td>
+<td style="text-align: left;">Low-productivity alpine meadows, open steppe, rocky grasslands.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Urban fabric</td>
+<td style="text-align: left;"><strong>Built-up/Artificial Surfaces</strong></td>
+<td style="text-align: center;">Mapped</td>
+<td style="text-align: left;">Continuous and discontinuous residential, commercial, civic fabric.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Industrial or commercial units</td>
+<td style="text-align: left;"><strong>Built-up/Artificial Surfaces</strong></td>
+<td style="text-align: center;">Mapped</td>
+<td style="text-align: left;">Factories, industrial facilities, infrastructure, transport nodes.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Inland waters</td>
+<td style="text-align: left;"><strong>Water</strong></td>
+<td style="text-align: center;">Mapped</td>
+<td style="text-align: left;">Freshwater lakes, reservoirs, canals, and river channels.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Marine waters</td>
+<td style="text-align: left;"><strong>Water</strong></td>
+<td style="text-align: center;">Mapped</td>
+<td style="text-align: left;">Coastal waters, estuaries, bays, and open seas.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Inland wetlands</td>
+<td style="text-align: left;"><strong>Wetland</strong></td>
+<td style="text-align: center;">Mapped</td>
+<td style="text-align: left;">Freshwater marshes, peatbogs, seasonally waterlogged terrain.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Coastal wetlands</td>
+<td style="text-align: left;"><strong>Wetland</strong></td>
+<td style="text-align: center;">Mapped</td>
+<td style="text-align: left;">Salt marshes, salines, and tidal flats.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Transitional woodland, shrub</td>
+<td style="text-align: left;"><strong>Shrub/Transitional Vegetation</strong></td>
+<td style="text-align: center;">Mapped</td>
+<td style="text-align: left;">Bushy regrowth, young saplings, clear-cut regeneration, maquis.</td>
+</tr>
+<tr>
+<td style="text-align: left;">Moors, heathland and sclerophyllous vegetation</td>
+<td style="text-align: left;"><strong>Shrub/Transitional Vegetation</strong></td>
+<td style="text-align: center;">Mapped</td>
+<td style="text-align: left;">Low woody scrub, heathland, gorse, and dwarf alpine shrubs.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Beaches, dunes, sands</strong></td>
+<td style="text-align: left;"><strong>[None - Excluded]</strong></td>
+<td style="text-align: center;"><strong>Excluded</strong></td>
+<td style="text-align: left;">Bare coastal sand/shingle lacking vegetation (<span class="inline-math">0.27\%</span> of archive, 0 in <span class="inline-math">T33UUP</span>).</td>
+</tr>
+</tbody>
+</table>
+<p><em>Audit Verification:</em> The code does not silently reassign unmapped labels. Unmapped labels contribute zero 1s to target vectors. In tile <code>T33UUP</code>, <em>Beaches, dunes, sands</em> occurs 0 times.</p>
+<hr />
+<h2>4. Reflectance Preprocessing &amp; Harmonization</h2>
+<ol>
+<li><strong>Bilinear Spatial Resampling:</strong><br />
+   Bands <span class="inline-math">B11</span> and <span class="inline-math">B12</span> have a native resolution of <span class="inline-math">20\text{ m}</span> (<span class="inline-math">60 &times; 60</span> pixels). We resample them to the <span class="inline-math">10\text{ m}</span> working grid (<span class="inline-math">120 &times; 120</span> pixels) using <strong>bilinear interpolation</strong> (<code>PIL.Image.BILINEAR</code>, order=1). Bilinear interpolation computes distance-weighted averages of four adjacent pixel centers, generating smooth, continuous spatial gradients without ringing artifacts (unlike bicubic) or artificial blocky steps (unlike nearest neighbor).</li>
+<li><strong>Radiometric Scaling to Surface Reflectance:</strong><br />
+   In accordance with the ESA Sentinel-2 L2A product specification, surface reflectance <span class="inline-math">\rho</span> is quantified as <span class="inline-math">\text{DN} = 10,000 &times; \rho</span>. We apply:<br />
+<br />
+<div class="math-eq">\rho = \text{clip}\left(\frac{\text{DN}}{10,000.0}, 0.0, 1.0\right)</div></li>
+</ol>
+<p>Division by 10,000 converts raw DN to Bottom-Of-Atmosphere surface reflectance. Clipping to <span class="inline-math">[0.0, 1.0]</span> handles rare specular glint highlights (e.g., solar reflections on glass roofs, greenhouse panels, or calm water surfaces <span class="inline-math">&gt; 10,000\text{ DN}</span>, which represent <span class="inline-math">&lt; 0.0042\%</span> of all pixels).<br />
+3. <strong>Preservation of Raw Data:</strong><br />
+   All raw GeoTIFF files remain completely unmodified in <code>data/curated_patches/</code>. Preprocessed tensors are saved in compressed archive <code>data/curated_dataset_phase2_1.npz</code> (76.66 MB).</p>
+<hr />
+<h2>5. Exploratory Data Analysis &amp; Class Frequencies</h2>
+<h3>Multi-Label Complexity</h3>
+<ul>
+<li>Minimum active labels per patch: <strong>1</strong></li>
+<li>Maximum active labels per patch: <strong>5</strong></li>
+<li>Mean active labels per patch: <strong>3.08</strong></li>
+<li><strong>82.0% of all patches contain <span class="inline-math">&ge; 2</span> co-occurring classes</strong>, confirming that single-label classification is fundamentally inadequate for European landscapes.</li>
+</ul>
+<h3>Class Prevalence Across Official Splits (<span class="inline-math">N=500</span>)</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Index</th>
+<th style="text-align: left;">Target Class</th>
+<th style="text-align: center;">Train (<span class="inline-math">N=300</span>)</th>
+<th style="text-align: center;">Val (<span class="inline-math">N=100</span>)</th>
+<th style="text-align: center;">Test (<span class="inline-math">N=100</span>)</th>
+<th style="text-align: center;">Total (<span class="inline-math">N=500</span>)</th>
+<th style="text-align: center;">Dataset Prevalence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">0</td>
+<td style="text-align: left;"><strong>Forest</strong></td>
+<td style="text-align: center;">258 (86.0%)</td>
+<td style="text-align: center;">84 (84.0%)</td>
+<td style="text-align: center;">95 (95.0%)</td>
+<td style="text-align: center;">437</td>
+<td style="text-align: center;">87.4%</td>
+</tr>
+<tr>
+<td style="text-align: center;">1</td>
+<td style="text-align: left;"><strong>Agriculture</strong></td>
+<td style="text-align: center;">142 (47.3%)</td>
+<td style="text-align: center;">74 (74.0%)</td>
+<td style="text-align: center;">52 (52.0%)</td>
+<td style="text-align: center;">268</td>
+<td style="text-align: center;">53.6%</td>
+</tr>
+<tr>
+<td style="text-align: center;">2</td>
+<td style="text-align: left;"><strong>Grassland/Pasture</strong></td>
+<td style="text-align: center;">209 (69.7%)</td>
+<td style="text-align: center;">75 (75.0%)</td>
+<td style="text-align: center;">39 (39.0%)</td>
+<td style="text-align: center;">323</td>
+<td style="text-align: center;">64.6%</td>
+</tr>
+<tr>
+<td style="text-align: center;">3</td>
+<td style="text-align: left;"><strong>Built-up/Artificial</strong></td>
+<td style="text-align: center;">130 (43.3%)</td>
+<td style="text-align: center;">58 (58.0%)</td>
+<td style="text-align: center;">31 (31.0%)</td>
+<td style="text-align: center;">219</td>
+<td style="text-align: center;">43.8%</td>
+</tr>
+<tr>
+<td style="text-align: center;">4</td>
+<td style="text-align: left;"><strong>Water</strong></td>
+<td style="text-align: center;">41 (13.7%)</td>
+<td style="text-align: center;">28 (28.0%)</td>
+<td style="text-align: center;">21 (21.0%)</td>
+<td style="text-align: center;">90</td>
+<td style="text-align: center;">18.0%</td>
+</tr>
+<tr>
+<td style="text-align: center;">5</td>
+<td style="text-align: left;"><strong>Wetland</strong></td>
+<td style="text-align: center;"><strong>8 (2.7%)</strong></td>
+<td style="text-align: center;"><strong>16 (16.0%)</strong></td>
+<td style="text-align: center;"><strong>27 (27.0%)</strong></td>
+<td style="text-align: center;"><strong>51</strong></td>
+<td style="text-align: center;"><strong>10.2%</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;">6</td>
+<td style="text-align: left;"><strong>Shrub/Transitional</strong></td>
+<td style="text-align: center;"><strong>59 (19.7%)</strong></td>
+<td style="text-align: center;"><strong>13 (13.0%)</strong></td>
+<td style="text-align: center;"><strong>42 (42.0%)</strong></td>
+<td style="text-align: center;"><strong>114</strong></td>
+<td style="text-align: center;"><strong>22.8%</strong></td>
+</tr>
+</tbody>
+</table>
+<p><em>Co-occurrence Highlights:</em> The most frequent pairwise co-occurrences in tile <code>T33UUP</code> are <strong>Forest + Grassland/Pasture</strong> (wooded valley margins), <strong>Forest + Agriculture</strong>, and <strong>Agriculture + Built-up</strong> (rural villages).</p>
+<hr />
+<h2>6. Multi-Label Deep Learning Methodology</h2>
+<h3>Mathematical Formulation</h3>
+<p>Given an input multispectral cube <span class="inline-math"><b>X</b> &isin; &Ropf;^{C &times; 120 &times; 120}</span>, the neural network computes unconstrained raw logits <span class="inline-math"><b>z</b> = [z_1, z_2, ..., z_K]^<sup>T</sup> &isin; &Ropf;^7</span>. </p>
+<p>Unlike multi-class classification which employs a softmax activation (<span class="inline-math">\sum_k p_k = 1</span>), multi-label classification treats each class as an independent Bernoulli trial. Independent class probabilities <span class="inline-math">p&#770;_k &isin; [0, 1]</span> are obtained via the standard logistic sigmoid function:</p>
+<div class="math-eq">p&#770;_k = &sigma;(z_k) = \frac{1}{1 + e^{-z_k}}</div>
+
+<h3>Loss Function</h3>
+<p>The model is optimized using <strong>Binary Cross-Entropy with Logits</strong> (<code>BCEWithLogitsLoss</code>), combining the sigmoid operation with binary cross-entropy:</p>
+<div class="math-eq">L<sub>BCE</sub>(<b>z</b>, <b>y</b>) = -(1/K) &sum;<sub>k=1..K</sub> [ y_k \cdot \log &sigma;(z_k) + (1 - y_k) \cdot \log(1 - &sigma;(z_k)) ]</div>
+
+<h3>Binary Decision Thresholding</h3>
+<p>Binary predictions <span class="inline-math">y&#770;_k &isin; {0, 1}</span> are formed by applying a decision threshold vector <span class="inline-math">\mathbf{T} = [T_1, ..., T_7]</span>:</p>
+<div class="math-eq">y&#770;_k = &Iopf;(p&#770;_k &ge; T_k)</div>
+<p>We evaluate:<br />
+1. <strong>Standard Default Threshold (<span class="inline-math"><i>T<sub>k</sub></i> = 0.50</span>):</strong> Canonical baseline for unweighted cross-entropy.<br />
+2. *<em>Validation-Calibrated Thresholds (<span class="inline-math"><i>T<sub>k</sub></i>^<em></span>):</em></em> Selected by grid search over <span class="inline-math">T &isin; [0.20, 0.80]</span> on the validation split to maximize validation Macro-F1. <em>Crucially, test labels are never accessed during calibration.</em></p>
+<h3>CNN Architecture (<code>MultispectralCNN</code>)</h3>
+<p>Implemented in <code>src/model.py</code>, the network extracts spatial-spectral features without excessive parameterization:<br />
+- <strong>Block 1 (120×120 → 60×60):</strong> <span class="inline-math">\text{Conv2d}(C \to 32, 3 &times; 3) \to \text{BN} \to \text{ReLU} \to \text{Conv2d}(32 \to 32, 3 &times; 3) \to \text{BN} \to \text{ReLU} \to \text{MaxPool2d}(2, 2)</span><br />
+- <strong>Block 2 (60×60 → 30×30):</strong> <span class="inline-math">\text{Conv2d}(32 \to 64, 3 &times; 3) \to \text{BN} \to \text{ReLU} \to \text{Conv2d}(64 \to 64, 3 &times; 3) \to \text{BN} \to \text{ReLU} \to \text{MaxPool2d}(2, 2)</span><br />
+- <strong>Block 3 (30×30 → 15×15):</strong> <span class="inline-math">\text{Conv2d}(64 \to 128, 3 &times; 3) \to \text{BN} \to \text{ReLU} \to \text{Conv2d}(128 \to 128, 3 &times; 3) \to \text{BN} \to \text{ReLU} \to \text{MaxPool2d}(2, 2)</span><br />
+- <strong>Block 4 (15×15 → 7×7):</strong> <span class="inline-math">\text{Conv2d}(128 \to 256, 3 &times; 3) \to \text{BN} \to \text{ReLU} \to \text{MaxPool2d}(2, 2)</span><br />
+- <strong>Global Pooling &amp; Head:</strong> <span class="inline-math">\text{AdaptiveAvgPool2d}((1, 1)) \to \text{Flatten} \to \text{Dropout}(0.4) \to \text{Linear}(256, 128) \to \text{ReLU} \to \text{Dropout}(0.3) \to \text{Linear}(128, 7)</span><br />
+- <strong>Trainable Parameters:</strong> <span class="inline-math"><i>M</i><sub>1</sub></span>: 616,679; <span class="inline-math"><i>M</i><sub>2</sub></span>: 616,967; <span class="inline-math"><i>M</i><sub>3</sub></span>: 617,543.</p>
+<h3>Training Configuration</h3>
+<ul>
+<li><strong>Optimizer:</strong> <code>AdamW</code> (<span class="inline-math">\text{lr} = 1.0 &times; 10^{-3}</span>, <span class="inline-math">\text{weight_decay} = 1.0 &times; 10^{-4}</span>)</li>
+<li><strong>LR Scheduler:</strong> <code>CosineAnnealingLR</code> (<span class="inline-math">T_{\max} = 35</span>, <span class="inline-math">\eta_{\min} = 1.0 &times; 10^{-5}</span>)</li>
+<li><strong>Batch Size:</strong> 16 (19 batches/epoch)</li>
+<li><strong>Early Stopping:</strong> Monitored on validation loss (patience = 8 epochs)</li>
+<li><strong>Seed Policy:</strong> <code>seed=42</code> across Python, NumPy, and PyTorch</li>
+</ul>
+<hr />
+<h2>7. Experimental Results</h2>
+<p>The models were trained and evaluated using the verified metrics stored in <code>outputs/metrics/phase3_model_comparison.csv</code> and <code>outputs/metrics/phase3_per_class_metrics.csv</code>.</p>
+<h3>7.1 Overall Performance Summary on Test Set (<span class="inline-math">N=100</span>)</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Evaluation Protocol</th>
+<th style="text-align: left;">Model Identifier</th>
+<th style="text-align: center;">Macro-F1</th>
+<th style="text-align: center;">Micro-F1</th>
+<th style="text-align: center;">Macro-Precision</th>
+<th style="text-align: center;">Macro-Recall</th>
+<th style="text-align: center;">Exact Match Ratio</th>
+<th style="text-align: center;">Hamming Loss</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Standard (<span class="inline-math"><i>T</i> = 0.50</span>)</strong></td>
+<td style="text-align: left;"><strong><span class="inline-math"><i>M</i><sub>1</sub></span> (Visible RGB)</strong></td>
+<td style="text-align: center;">0.5978</td>
+<td style="text-align: center;">0.7403</td>
+<td style="text-align: center;">0.7317</td>
+<td style="text-align: center;">0.5588</td>
+<td style="text-align: center;">12.0%</td>
+<td style="text-align: center;">0.2014</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Standard (<span class="inline-math"><i>T</i> = 0.50</span>)</strong></td>
+<td style="text-align: left;"><strong><span class="inline-math"><i>M</i><sub>2</sub></span> (Visible + NIR)</strong></td>
+<td style="text-align: center;"><strong>0.7110</strong></td>
+<td style="text-align: center;"><strong>0.8205</strong></td>
+<td style="text-align: center;"><strong>0.7326</strong></td>
+<td style="text-align: center;"><strong>0.7036</strong></td>
+<td style="text-align: center;"><strong>38.0%</strong></td>
+<td style="text-align: center;"><strong>0.1500</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Standard (<span class="inline-math"><i>T</i> = 0.50</span>)</strong></td>
+<td style="text-align: left;"><strong><span class="inline-math"><i>M</i><sub>3</sub></span> (Multispectral)</strong></td>
+<td style="text-align: center;">0.5673</td>
+<td style="text-align: center;">0.7081</td>
+<td style="text-align: center;">0.6894</td>
+<td style="text-align: center;">0.5666</td>
+<td style="text-align: center;">5.0%</td>
+<td style="text-align: center;">0.2486</td>
+</tr>
+<tr>
+<td style="text-align: left;"><em>Validation-Tuned</em></td>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>1</sub></span> (Tuned Thresholds)</td>
+<td style="text-align: center;">0.7076</td>
+<td style="text-align: center;">0.8024</td>
+<td style="text-align: center;">0.6648</td>
+<td style="text-align: center;">0.7868</td>
+<td style="text-align: center;">9.0%</td>
+<td style="text-align: center;">0.1857</td>
+</tr>
+<tr>
+<td style="text-align: left;"><em>Validation-Tuned</em></td>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>2</sub></span> (Tuned Thresholds)</td>
+<td style="text-align: center;">0.7020</td>
+<td style="text-align: center;">0.7928</td>
+<td style="text-align: center;">0.6566</td>
+<td style="text-align: center;">0.7886</td>
+<td style="text-align: center;">7.0%</td>
+<td style="text-align: center;">0.1971</td>
+</tr>
+<tr>
+<td style="text-align: left;"><em>Validation-Tuned</em></td>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>3</sub></span> (Tuned Thresholds)</td>
+<td style="text-align: center;">0.6559</td>
+<td style="text-align: center;">0.7692</td>
+<td style="text-align: center;">0.5939</td>
+<td style="text-align: center;">0.7645</td>
+<td style="text-align: center;">6.0%</td>
+<td style="text-align: center;">0.2229</td>
+</tr>
+</tbody>
+</table>
+<p><em>Validation-Tuned Threshold Vectors:</em><br />
+- <span class="inline-math"><i>M</i><sub>1</sub></span>: <span class="inline-math">[\text{Fo}: 0.30, \text{Ag}: 0.20, \text{Gr}: 0.40, \text{Bu}: 0.40, \text{Wa}: 0.30, \text{We}: 0.50, \text{Sh}: 0.20]</span><br />
+- <span class="inline-math"><i>M</i><sub>2</sub></span>: <span class="inline-math">[\text{Fo}: 0.20, \text{Ag}: 0.20, \text{Gr}: 0.35, \text{Bu}: 0.30, \text{Wa}: 0.30, \text{We}: 0.50, \text{Sh}: 0.20]</span><br />
+- <span class="inline-math"><i>M</i><sub>3</sub></span>: <span class="inline-math">[\text{Fo}: 0.45, \text{Ag}: 0.30, \text{Gr}: 0.45, \text{Bu}: 0.45, \text{Wa}: 0.20, \text{We}: 0.50, \text{Sh}: 0.20]</span></p>
+<hr />
+<h3>7.2 Complete Per-Class Metrics Table at Threshold <span class="inline-math"><i>T</i> = 0.50</span></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Model</th>
+<th style="text-align: left;">Class Name</th>
+<th style="text-align: center;">Support</th>
+<th style="text-align: center;">Precision</th>
+<th style="text-align: center;">Recall</th>
+<th style="text-align: center;">F1-Score</th>
+<th style="text-align: center;">TP</th>
+<th style="text-align: center;">FP</th>
+<th style="text-align: center;">FN</th>
+<th style="text-align: center;">TN</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong><span class="inline-math"><i>M</i><sub>1</sub></span></strong></td>
+<td style="text-align: left;">Forest</td>
+<td style="text-align: center;">95</td>
+<td style="text-align: center;">0.9588</td>
+<td style="text-align: center;">0.9789</td>
+<td style="text-align: center;">0.9688</td>
+<td style="text-align: center;">93</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>1</sub></span></td>
+<td style="text-align: left;">Agriculture</td>
+<td style="text-align: center;">52</td>
+<td style="text-align: center;">0.9444</td>
+<td style="text-align: center;">0.6538</td>
+<td style="text-align: center;">0.7727</td>
+<td style="text-align: center;">34</td>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">18</td>
+<td style="text-align: center;">46</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>1</sub></span></td>
+<td style="text-align: left;">Grassland/Pasture</td>
+<td style="text-align: center;">39</td>
+<td style="text-align: center;">0.6604</td>
+<td style="text-align: center;">0.8974</td>
+<td style="text-align: center;">0.7609</td>
+<td style="text-align: center;">35</td>
+<td style="text-align: center;">18</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">43</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>1</sub></span></td>
+<td style="text-align: left;">Built-up/Artificial</td>
+<td style="text-align: center;">31</td>
+<td style="text-align: center;">0.6296</td>
+<td style="text-align: center;">0.5484</td>
+<td style="text-align: center;">0.5862</td>
+<td style="text-align: center;">17</td>
+<td style="text-align: center;">10</td>
+<td style="text-align: center;">14</td>
+<td style="text-align: center;">59</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>1</sub></span></td>
+<td style="text-align: left;">Water</td>
+<td style="text-align: center;">21</td>
+<td style="text-align: center;">0.9286</td>
+<td style="text-align: center;">0.6190</td>
+<td style="text-align: center;">0.7429</td>
+<td style="text-align: center;">13</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">78</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>1</sub></span></td>
+<td style="text-align: left;"><strong>Wetland</strong></td>
+<td style="text-align: center;"><strong>27</strong></td>
+<td style="text-align: center;"><strong>0.0000</strong></td>
+<td style="text-align: center;"><strong>0.0000</strong></td>
+<td style="text-align: center;"><strong>0.0000</strong></td>
+<td style="text-align: center;"><strong>0</strong></td>
+<td style="text-align: center;"><strong>0</strong></td>
+<td style="text-align: center;"><strong>27</strong></td>
+<td style="text-align: center;"><strong>73</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>1</sub></span></td>
+<td style="text-align: left;"><strong>Shrub/Transitional</strong></td>
+<td style="text-align: center;"><strong>42</strong></td>
+<td style="text-align: center;"><strong>1.0000</strong></td>
+<td style="text-align: center;"><strong>0.2143</strong></td>
+<td style="text-align: center;"><strong>0.3529</strong></td>
+<td style="text-align: center;"><strong>9</strong></td>
+<td style="text-align: center;"><strong>0</strong></td>
+<td style="text-align: center;"><strong>33</strong></td>
+<td style="text-align: center;"><strong>58</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><span class="inline-math"><i>M</i><sub>2</sub></span></strong></td>
+<td style="text-align: left;">Forest</td>
+<td style="text-align: center;">95</td>
+<td style="text-align: center;">0.9688</td>
+<td style="text-align: center;">0.9789</td>
+<td style="text-align: center;">0.9738</td>
+<td style="text-align: center;">93</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">2</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>2</sub></span></td>
+<td style="text-align: left;">Agriculture</td>
+<td style="text-align: center;">52</td>
+<td style="text-align: center;">0.9512</td>
+<td style="text-align: center;">0.7500</td>
+<td style="text-align: center;">0.8387</td>
+<td style="text-align: center;">39</td>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">13</td>
+<td style="text-align: center;">46</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>2</sub></span></td>
+<td style="text-align: left;">Grassland/Pasture</td>
+<td style="text-align: center;">39</td>
+<td style="text-align: center;">0.6727</td>
+<td style="text-align: center;">0.9487</td>
+<td style="text-align: center;">0.7872</td>
+<td style="text-align: center;">37</td>
+<td style="text-align: center;">18</td>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">43</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>2</sub></span></td>
+<td style="text-align: left;">Built-up/Artificial</td>
+<td style="text-align: center;">31</td>
+<td style="text-align: center;">0.5625</td>
+<td style="text-align: center;">0.5806</td>
+<td style="text-align: center;">0.5714</td>
+<td style="text-align: center;">18</td>
+<td style="text-align: center;">14</td>
+<td style="text-align: center;">13</td>
+<td style="text-align: center;">55</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>2</sub></span></td>
+<td style="text-align: left;">Water</td>
+<td style="text-align: center;">21</td>
+<td style="text-align: center;"><strong>1.0000</strong></td>
+<td style="text-align: center;"><strong>0.8095</strong></td>
+<td style="text-align: center;"><strong>0.8947</strong></td>
+<td style="text-align: center;"><strong>17</strong></td>
+<td style="text-align: center;"><strong>0</strong></td>
+<td style="text-align: center;"><strong>4</strong></td>
+<td style="text-align: center;"><strong>79</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>2</sub></span></td>
+<td style="text-align: left;"><strong>Wetland</strong></td>
+<td style="text-align: center;"><strong>27</strong></td>
+<td style="text-align: center;"><strong>0.0000</strong></td>
+<td style="text-align: center;"><strong>0.0000</strong></td>
+<td style="text-align: center;"><strong>0.0000</strong></td>
+<td style="text-align: center;"><strong>0</strong></td>
+<td style="text-align: center;"><strong>0</strong></td>
+<td style="text-align: center;"><strong>27</strong></td>
+<td style="text-align: center;"><strong>73</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>2</sub></span></td>
+<td style="text-align: left;"><strong>Shrub/Transitional</strong></td>
+<td style="text-align: center;"><strong>42</strong></td>
+<td style="text-align: center;"><strong>0.9730</strong></td>
+<td style="text-align: center;"><strong>0.8571</strong></td>
+<td style="text-align: center;"><strong>0.9114</strong></td>
+<td style="text-align: center;"><strong>36</strong></td>
+<td style="text-align: center;"><strong>1</strong></td>
+<td style="text-align: center;"><strong>6</strong></td>
+<td style="text-align: center;"><strong>57</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><span class="inline-math"><i>M</i><sub>3</sub></span></strong></td>
+<td style="text-align: left;">Forest</td>
+<td style="text-align: center;">95</td>
+<td style="text-align: center;">0.9592</td>
+<td style="text-align: center;">0.9895</td>
+<td style="text-align: center;">0.9741</td>
+<td style="text-align: center;">94</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>3</sub></span></td>
+<td style="text-align: left;">Agriculture</td>
+<td style="text-align: center;">52</td>
+<td style="text-align: center;">0.9000</td>
+<td style="text-align: center;">0.6923</td>
+<td style="text-align: center;">0.7826</td>
+<td style="text-align: center;">36</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">44</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>3</sub></span></td>
+<td style="text-align: left;">Grassland/Pasture</td>
+<td style="text-align: center;">39</td>
+<td style="text-align: center;"><strong>0.4000</strong></td>
+<td style="text-align: center;">0.9744</td>
+<td style="text-align: center;"><strong>0.5672</strong></td>
+<td style="text-align: center;">38</td>
+<td style="text-align: center;"><strong>57</strong></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">4</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>3</sub></span></td>
+<td style="text-align: left;">Built-up/Artificial</td>
+<td style="text-align: center;">31</td>
+<td style="text-align: center;">0.5667</td>
+<td style="text-align: center;">0.5484</td>
+<td style="text-align: center;">0.5574</td>
+<td style="text-align: center;">17</td>
+<td style="text-align: center;">13</td>
+<td style="text-align: center;">14</td>
+<td style="text-align: center;">56</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>3</sub></span></td>
+<td style="text-align: left;">Water</td>
+<td style="text-align: center;">21</td>
+<td style="text-align: center;">1.0000</td>
+<td style="text-align: center;"><strong>0.2857</strong></td>
+<td style="text-align: center;"><strong>0.4444</strong></td>
+<td style="text-align: center;">6</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;"><strong>15</strong></td>
+<td style="text-align: center;">79</td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>3</sub></span></td>
+<td style="text-align: left;"><strong>Wetland</strong></td>
+<td style="text-align: center;"><strong>27</strong></td>
+<td style="text-align: center;"><strong>0.0000</strong></td>
+<td style="text-align: center;"><strong>0.0000</strong></td>
+<td style="text-align: center;"><strong>0.0000</strong></td>
+<td style="text-align: center;"><strong>0</strong></td>
+<td style="text-align: center;"><strong>0</strong></td>
+<td style="text-align: center;"><strong>27</strong></td>
+<td style="text-align: center;"><strong>73</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><span class="inline-math"><i>M</i><sub>3</sub></span></td>
+<td style="text-align: left;"><strong>Shrub/Transitional</strong></td>
+<td style="text-align: center;"><strong>42</strong></td>
+<td style="text-align: center;">1.0000</td>
+<td style="text-align: center;">0.4762</td>
+<td style="text-align: center;">0.6452</td>
+<td style="text-align: center;">20</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">22</td>
+<td style="text-align: center;">58</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>8. Discussion of NIR and SWIR Results</h2>
+<h3>8.1 The Physical Impact of NIR (<span class="inline-math">B08</span>): Spongy Mesophyll Scattering</h3>
+<p>Adding Band <span class="inline-math">B08</span> (<span class="inline-math">842\text{ nm}</span>) provided an immediate <strong>+11.32 percentage point increase</strong> in default-threshold Macro-F1 (0.5978 to 0.7110) and more than tripled the Exact Match subset accuracy from <strong>12.0% to 38.0%</strong>.<br />
+1. <strong>Shrub/Transitional Vegetation Breakthrough:</strong><br />
+   In visible RGB (<span class="inline-math"><i>M</i><sub>1</sub></span>), young saplings, clear-cut regrowth, and heath shrubs display chlorophyll absorption identical to closed mature forest, yielding an F1 of only 0.3529 (33 false negatives). In NIR, however, the multi-tiered architecture of open scrub scatters radiation differently from dense forest canopies with deep structural shadowing. Consequently, <strong><span class="inline-math"><i>M</i><sub>2</sub></span> recovered 36 of 42 shrub instances</strong>, elevating F1 to <strong>0.9114 (+55.85 pp)</strong>.<br />
+2. <strong>Hydrological Delineation (Water):</strong><br />
+   Liquid water strongly absorbs near-infrared radiation. Pure water bodies exhibit near-zero reflectance at <span class="inline-math">842\text{ nm}</span>. Adding <span class="inline-math">B08</span> allowed <span class="inline-math"><i>M</i><sub>2</sub></span> to attain <strong>100% precision on water</strong> (0 false alarms) and boosted recall from 61.9% to 80.95%, increasing F1 from <strong>0.7429 to 0.8947 (+15.18 pp)</strong>.</p>
+<h3>8.2 The Impact of SWIR (<span class="inline-math">B11, B12</span>): Small-Sample Dimensionality Trade-Off</h3>
+<p>In broad continental benchmarks (<span class="inline-math">&gt; 100,000</span> patches), SWIR typically aids classification. However, on our 300-patch training split, <strong><span class="inline-math"><i>M</i><sub>3</sub></span> underperformed <span class="inline-math"><i>M</i><sub>2</sub></span></strong> (Macro-F1 0.5673 vs 0.7110):<br />
+1. <strong>Curse of Dimensionality on Small Samples:</strong> Moving from 4 channels (<span class="inline-math"><i>M</i><sub>2</sub></span>) to 6 channels (<span class="inline-math"><i>M</i><sub>3</sub></span>) expanded the input space by 50% without additional training data, causing optimization instability.<br />
+2. <strong>Spatial Resampling Uncertainty:</strong> <span class="inline-math">B11</span> and <span class="inline-math">B12</span> originate at <span class="inline-math">20\text{ m}</span> native resolution. Bilinear interpolation smooths pixel grids but cannot synthesize genuine <span class="inline-math">10\text{ m}</span> spatial edges.<br />
+3. <strong>Severe Grassland Over-Prediction:</strong> <span class="inline-math"><i>M</i><sub>3</sub></span> generated <strong>57 False Positives</strong> on Grassland/Pasture (predicting pasture in 95 of 100 test patches), collapsing precision to 40.0% and F1 to 0.5672. Furthermore, water recall dropped to 28.57% (15 omissions).</p>
+<p><em>Scientific Takeaway:</em> This experiment does not establish that SWIR is universally unhelpful; rather, it demonstrates that without pretraining or large-scale regularization, increasing spectral dimensionality on small datasets can induce overfitting.</p>
+<hr />
+<h2>9. Error Analysis and Wetland Classification Failure</h2>
+<h3>9.1 Diagnostic Breakdown of Test Predictions</h3>
+<p>At the standard <span class="inline-math"><i>T</i> = 0.50</span> threshold:<br />
+- <strong>Exact Match Ratio:</strong> <strong>38.0%</strong> in <span class="inline-math"><i>M</i><sub>2</sub></span>, <strong>12.0%</strong> in <span class="inline-math"><i>M</i><sub>1</sub></span>, and <strong>5.0%</strong> in <span class="inline-math"><i>M</i><sub>3</sub></span>. Because exact match requires all 7 binary decisions to match the ground truth simultaneously, higher label cardinality (average 3.08 labels per patch) makes this metric demanding.<br />
+- <strong>Dominant Confusion Pair:</strong> <em>Agriculture</em> versus <em>Grassland/Pasture</em>. In <span class="inline-math"><i>M</i><sub>1</sub></span> and <span class="inline-math"><i>M</i><sub>2</sub></span>, exactly 18 patches were falsely classified as Grassland due to spectral similarities between tilled clover meadows and grazed alpine turf.</p>
+<h3>9.2 The Wetland Classification Failure</h3>
+<p>Across all three models at <span class="inline-math"><i>T</i> = 0.50</span>, <strong>Wetland achieved an F1-score of exactly 0.0000</strong>:<br />
+- Ground Truth Wetland patches in Test: <strong>27</strong><br />
+- True Positives (<span class="inline-math">\text{TP}</span>): <strong>0</strong><br />
+- False Positives (<span class="inline-math">\text{FP}</span>): <strong>0</strong><br />
+- False Negatives (<span class="inline-math">\text{FN}</span>): <strong>27</strong></p>
+<h4>Why Did the Models Fail on Wetland?</h4>
+<ol>
+<li><strong>Severe Training Imbalance (2.7% Prevalence):</strong> In tile <code>T33UUP</code>, the official training split provided <strong>only 8 positive Wetland patches out of 300</strong> (292 negatives, 97.3%).</li>
+<li><strong>Loss Formulation Dynamics:</strong> In unweighted Binary Cross-Entropy loss, misclassifying 8 positive patches contributes very little gradient signal compared to avoiding false alarms on the 292 negative patches. Consequently, the network learned that outputting strongly negative logits for Wetland (<span class="inline-math">z_{\text{wetland}} &isin; [-3.5, -0.8]</span>) minimized overall loss.</li>
+<li><strong>Threshold Calibration Insight:</strong> When tuning decision thresholds on the validation set, lowering the threshold in <span class="inline-math"><i>M</i><sub>3</sub></span> to <span class="inline-math">T=0.20</span> yielded non-zero validation recall, but on the test set it introduced false alarms in damp agricultural fields.</li>
+</ol>
+<hr />
+<h2>10. Conclusions and Limitations</h2>
+<h3>10.1 Conclusions</h3>
+<ol>
+<li><strong>Multi-label recognition is essential:</strong> Over 82% of Sentinel-2 patches in European landscapes contain co-occurring land covers.</li>
+<li><strong>NIR (<span class="inline-math">B08</span>) provides the decisive performance boost:</strong> Adding NIR in <span class="inline-math"><i>M</i><sub>2</sub></span> increased default-threshold Macro-F1 by <strong>+11.32 percentage points</strong> (0.5978 to 0.7110), boosted Exact Match from 12% to 38%, and resolved woody scrub confusion (<em>Shrub</em> F1 surging from 0.3529 to 0.9114).</li>
+<li><strong><span class="inline-math"><i>M</i><sub>2</sub></span> performed best on this curated test set:</strong> <span class="inline-math"><i>M</i><sub>3</sub></span> achieved 0.5673 Macro-F1, demonstrating that adding SWIR on small sample sizes without pretraining can degrade generalization through overfitting.</li>
+<li><strong>Minority classes require dedicated loss weighting:</strong> Extreme training imbalance (8 Wetland patches) causes zero-recall failure under unweighted BCE loss.</li>
+</ol>
+<h3>10.2 Practical Limitations</h3>
+<ol>
+<li><strong>Single-Tile Geographic Scope:</strong> All 500 patches originate from Tile <code>T33UUP</code> in the Austrian Central Alps. The findings reflect Central European temperate alpine geography and cannot be claimed to generalize to Mediterranean, Scandinavian, or arid biomes.</li>
+<li><strong>Intentional Class-Selection Bias:</strong> To enable evaluation of rare classes, we collected 100% of the tile's Wetland and Shrub patches. This enriched Wetland to 10.2% and Shrub to 22.8% across the 500 patches, diverging from raw landscape prevalence (1.6% and 3.6%).</li>
+</ol>
+<h3>10.3 Future Improvements</h3>
+<ul>
+<li><strong>Positive-Class Weighting / Focal Loss:</strong> Apply positive class weights (<span class="inline-math">w_{\text{pos}} = N_{\text{neg}} / N_{\text{pos}}</span>) to penalize minority-class omissions.</li>
+<li><strong>Multispectral Transfer Learning:</strong> Pretrain the CNN backbone on continental-scale archives before fine-tuning on regional tiles.</li>
+<li><strong>Guided Super-Resolution:</strong> Downscale SWIR bands using 10 m visible band spatial guidance rather than unguided bilinear interpolation.</li>
+</ul>
+<hr />
+<h2>11. References</h2>
+<ol>
+<li><strong>Clasen, K., Sedona, R., Demir, B., et al.</strong> (2024). <em>reBEN: Refining the BigEarthNet Benchmark Archive for Remote Sensing Image Understanding</em>. arXiv preprint arXiv:2407.03653.</li>
+<li><strong>Sumbul, G., Charfuelan, M., de Wall, B., et al.</strong> (2019). <em>BigEarthNet: A Large-Scale Benchmark Archive for Remote Sensing Image Understanding</em>. IEEE International Geoscience and Remote Sensing Symposium (IGARSS 2019), pp. 5901–5904. DOI: <a href="https://doi.org/10.1109/IGARSS.2019.8900532">10.1109/IGARSS.2019.8900532</a>.</li>
+<li><strong>Sumbul, G., de Wall, B., Kreuziger, T., et al.</strong> (2021). <em>BigEarthNet-MM: A Large-Scale, Multimodal, Multilabel Benchmark Archive for Remote Sensing Image Classification and Retrieval</em>. IEEE Geoscience and Remote Sensing Magazine, 9(3), pp. 174–180. DOI: <a href="https://doi.org/10.1109/MGRS.2021.3089174">10.1109/MGRS.2021.3089174</a>.</li>
+<li><strong>European Space Agency (ESA).</strong> (2021). <em>Sentinel-2 User Handbook</em>. Document Reference: EOP-SM/1476/SR-dr, Issue 1, Rev. 2. European Space Agency, Frascati, Italy.</li>
+<li><strong>European Environment Agency (EEA).</strong> (2019). <em>CORINE Land Cover (CLC) 2018 Technical Guidelines</em>. EEA Report No. 17/2019. Publications Office of the European Union, Luxembourg.</li>
+<li><strong>Main-Knorn, M., Pflug, B., Louis, J., et al.</strong> (2017). <em>Sen2Cor for Sentinel-2</em>. In Image and Signal Processing for Remote Sensing XXIII, Proc. SPIE 10427, 1042704. DOI: <a href="https://doi.org/10.1117/12.2278218">10.1117/12.2278218</a>.</li>
+<li><strong>Paszke, A., Gross, S., Massa, F., et al.</strong> (2019). <em>PyTorch: An Imperative Style, High-Performance Deep Learning Library</em>. Advances in Neural Information Processing Systems (NeurIPS 2019), 32, pp. 8024–8035.</li>
+<li><strong>Pedregosa, F., Varoquaux, G., Gramfort, A., et al.</strong> (2011). <em>Scikit-learn: Machine Learning in Python</em>. Journal of Machine Learning Research, 12, pp. 2825–2830.</li>
+</ol>
+</body>
+</html>

@@ -23,7 +23,7 @@
 - **Spoken Script:**
   > "To understand why this work is necessary, look at how satellite imagery is traditionally classified. Conventional remote sensing forces every image pixel or patch into a single, mutually exclusive category—for example, calling an entire square kilometer 'Forest.'
   > But real landscapes are complex mosaics. A single 1.2-kilometer patch typically contains agricultural fields bordering woodlots, small rivers, and rural homes. If we force a single label, we discard secondary classes like freshwater streams or grazing pastures, which are critical for hydrology and environmental monitoring.
-  > In our dataset, we found that **over 82% of all satellite patches contain two or more co-occurring land covers**. Multi-label classification solves this by modeling each land-cover type as an independent binary question: is this class present in the patch, yes or no?"
+  > In our dataset, we found that **94.4% of all satellite patches contain two or more co-occurring land covers**, averaging 3.00 classes per patch. Multi-label classification solves this by modeling each land-cover type as an independent binary question: is this class present in the patch, yes or no?"
 
 ---
 
@@ -48,7 +48,7 @@
   > In the visible spectrum at 10-meter resolution: Blue B2, Green B3, and Red B4, which capture chlorophyll absorption.
   > In the near-infrared at 10 meters: Band B8 at 842 nanometers, which reflects strongly off the spongy mesophyll cells inside healthy leaves, but is completely absorbed by liquid water.
   > And in the shortwave-infrared: Bands B11 and B12 at 20-meter resolution, which are sensitive to leaf water content, soil moisture, and artificial surfaces.
-  > Our dataset consists of 500 genuine patches from Tile `T33UUP` in the Austrian Alps, strictly divided into the official splits: 300 for training, 100 for validation, and 100 for independent testing. We verified zero data leakage between these partitions."
+  > Our dataset consists of 500 genuine patches from Tile `T33UUP` in the Austrian Alps, strictly divided into the official splits: 300 for training, 100 for validation, and 100 for independent testing. We verified strict patch-level disjointness between these partitions, while recognizing that all patches originate from the same regional alpine tile."
 
 ---
 
@@ -93,10 +93,10 @@
   > "Here are our central experimental results on the independent 100-patch test set.
   > Looking at the standard 0.5 threshold:
   > Baseline M1, using visible RGB alone, achieved a Macro-F1 of **0.5978** and an Exact Match ratio of **12%**.
-  > **Model M2, which adds the Near-Infrared band B8, was our clear winner.** Macro-F1 jumped by over 11 percentage points to **0.7110**, Micro-F1 reached **0.8205**, and the Exact Match ratio more than tripled to **38.0%**. Adding NIR provided an immediate, statistically significant boost.
+  > **Model M2, which adds the Near-Infrared band B8, was our clear winner.** Macro-F1 jumped by over 11 percentage points to **0.7110**, Micro-F1 reached **0.8205**, and the Exact Match ratio more than tripled to **38.0%**, outperforming baseline M1 on the observed test metrics.
   > But look at Model M3, which added the SWIR bands B11 and B12. Macro-F1 dropped back to **0.5673**, and Exact Match fell to **5%**.
   > When we used validation-tuned thresholds, M1 reached 0.7076, M2 achieved 0.7020, and M3 reached 0.6559.
-  > The key takeaway is clear: adding NIR was strongly beneficial, but adding SWIR on this small dataset actually degraded performance."
+  > The key takeaway is clear: adding NIR was strongly beneficial, while adding SWIR under these experimental conditions underperformed M2."
 
 ---
 
@@ -117,9 +117,9 @@
 - **Visual:** Three clean summary cards: Conclusions, Limitations, and Future Work.
 - **Spoken Script:**
   > "To conclude our presentation:
-  > First, multi-label classification is essential for remote sensing because over 80% of real landscape patches contain mixed surface types.
+  > First, multi-label classification is essential for remote sensing because 94.4% of real landscape patches in our dataset contain mixed surface types.
   > Second, Near-Infrared is the single most valuable spectral band for terrestrial classification, substantially improving vegetation differentiation and water boundary recognition.
-  > Third, adding SWIR does not automatically improve accuracy on small datasets. Expanding input channels without enough training data increased model variance and caused overfitting.
+  > Third, M2 performed best on this curated test set at the default threshold of 0.5. M3 underperformed M2, achieving a Macro-F1 of 0.5673 compared with 0.7110 for M2. Small training-sample size, spectral collinearity, resampling effects, and optimization instability are possible explanations, but their individual contributions were not independently tested.
   > Our main limitations are that all 500 patches come from one alpine tile in Austria, so these results cannot be generalized globally, and Wetland suffered from severe training imbalance.
   > For future work, we recommend implementing positive-class loss weighting or Focal Loss to help detect rare wetlands, and using transfer learning from continental-scale pre-trained models.
   > Thank you very much for your time. I would be happy to answer any questions."

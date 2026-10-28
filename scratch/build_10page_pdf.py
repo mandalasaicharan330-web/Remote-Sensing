@@ -1,0 +1,741 @@
+"""
+build_10page_pdf.py
+===================
+Compiles report/final_project_report.md into a beautifully styled,
+professional 10-page academic PDF report matching the structure of Final_Report.pdf.
+Uses headless Chrome / Edge to guarantee exact CSS page-break control.
+"""
+
+import os
+import subprocess
+import pypdf
+
+def generate_pdf():
+    html_content = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Technical Report: Multi-Label Land-Cover Recognition Using Sentinel-2 Multispectral Classification</title>
+<style>
+@page {
+    size: A4 portrait;
+    margin: 18mm 18mm 18mm 18mm;
+    @bottom-right {
+        content: counter(page);
+    }
+}
+* {
+    box-sizing: border-box;
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 9.5pt;
+    line-height: 1.45;
+    color: #1e293b;
+    margin: 0;
+    padding: 0;
+}
+.page {
+    page-break-after: always;
+    break-after: page;
+    min-height: 250mm;
+    position: relative;
+}
+.page:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+}
+h1 {
+    font-size: 19pt;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.25;
+    margin-top: 0;
+    margin-bottom: 8pt;
+}
+h2 {
+    font-size: 13.5pt;
+    font-weight: 700;
+    color: #1e40af;
+    border-bottom: 1.5pt solid #cbd5e1;
+    padding-bottom: 3pt;
+    margin-top: 14pt;
+    margin-bottom: 7pt;
+}
+h3 {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #0f766e;
+    margin-top: 10pt;
+    margin-bottom: 4pt;
+}
+h4 {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #334155;
+    margin-top: 8pt;
+    margin-bottom: 3pt;
+}
+p {
+    margin-top: 0;
+    margin-bottom: 7pt;
+    text-align: justify;
+}
+ul, ol {
+    margin-top: 0;
+    margin-bottom: 7pt;
+    padding-left: 18pt;
+}
+li {
+    margin-bottom: 3.5pt;
+}
+.meta-block {
+    background: #f8fafc;
+    border-left: 3.5pt solid #1e40af;
+    padding: 7pt 12pt;
+    margin-bottom: 12pt;
+    font-size: 9.5pt;
+    color: #334155;
+}
+.meta-block strong {
+    color: #0f172a;
+}
+.abstract-box {
+    background: #f1f5f9;
+    border: 1pt solid #cbd5e1;
+    border-radius: 4pt;
+    padding: 9pt 12pt;
+    margin-bottom: 12pt;
+}
+.abstract-title {
+    font-weight: bold;
+    color: #0f172a;
+    font-size: 10.5pt;
+    margin-bottom: 4pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5pt;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 6pt;
+    margin-bottom: 9pt;
+    font-size: 8.5pt;
+}
+th, td {
+    border: 0.75pt solid #cbd5e1;
+    padding: 4.5pt 6pt;
+    text-align: left;
+}
+th {
+    background-color: #1e40af;
+    color: #ffffff;
+    font-weight: 600;
+}
+tr:nth-child(even) td {
+    background-color: #f8fafc;
+}
+.highlight-row td {
+    background-color: #fef3c7 !important;
+    font-weight: bold;
+}
+code {
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 8.5pt;
+    background-color: #f1f5f9;
+    padding: 1pt 3pt;
+    border-radius: 2pt;
+    color: #0f766e;
+}
+pre {
+    background-color: #f8fafc;
+    border: 0.75pt solid #e2e8f0;
+    border-radius: 4pt;
+    padding: 6pt 9pt;
+    font-size: 8pt;
+    line-height: 1.35;
+    margin-top: 4pt;
+    margin-bottom: 8pt;
+    font-family: "Consolas", monospace;
+}
+.math-eq {
+    background: #f8fafc;
+    border: 0.5pt solid #e2e8f0;
+    padding: 4pt 8pt;
+    border-radius: 3pt;
+    text-align: center;
+    font-family: "Cambria Math", "Times New Roman", serif;
+    font-size: 10pt;
+    margin: 6pt 0;
+}
+.page-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    font-size: 8pt;
+    color: #94a3b8;
+    text-align: right;
+    border-top: 0.5pt solid #e2e8f0;
+    padding-top: 3pt;
+}
+</style>
+</head>
+<body>
+
+<!-- ===================================================================== -->
+<!-- PAGE 1 -->
+<!-- ===================================================================== -->
+<div class="page">
+    <h1>Technical Report: Multi-Label Land-Cover Recognition Using Sentinel-2 Multispectral Classification on the BigEarthNet Dataset</h1>
+    
+    <div class="meta-block">
+        <strong>Name:</strong> Mandala Sai Charan &nbsp;&nbsp;|&nbsp;&nbsp; 
+        <strong>Admission No.:</strong> 24JE1093<br>
+        <strong>Course:</strong> Remote Sensing Practical (Project 6) &nbsp;&nbsp;|&nbsp;&nbsp; 
+        <strong>Dataset Reference:</strong> BigEarthNet v2.0 (<em>reBEN</em>), TU Berlin<br>
+        <strong>Date:</strong> October 2026 &nbsp;&nbsp;|&nbsp;&nbsp;
+        <strong>Verification Status:</strong> Passed (Exit Code 0)
+    </div>
+
+    <div class="abstract-box">
+        <div class="abstract-title">Abstract</div>
+        <p>Land-cover mapping is a foundational pillar of earth observation, environmental monitoring, agricultural yield assessment, and natural hazard management. In heterogeneous natural and anthropogenic terrains, satellite image footprints frequently encompass multiple surface categories simultaneously (e.g., agricultural parcels bordered by woodlots, or stream corridors traversing settlements). Conventional single-label classification assigns an exclusive category to each scene, fundamentally misrepresenting mixed landscapes. In this project, we implement and evaluate a multi-label remote sensing classification framework using Sentinel-2 multispectral imagery from the benchmark BigEarthNet v2.0 (<em>reBEN</em>) archive.</p>
+        <p>We curated and verified a 500-patch genuine dataset originating from Sentinel-2 tile <code>T33UUP</code> in the Austrian Central Alps, partitioned into official, disjoint splits: <strong>300 Training</strong>, <strong>100 Validation</strong>, and <strong>100 Test</strong> patches. Six diagnostic spectral bands—Blue (B02), Green (B03), Red (B04), Near-Infrared (B08), and Shortwave-Infrared (B11, B12)—were radiometrically converted to Bottom-Of-Atmosphere (BOA) reflectance [0.0, 1.0], with 20 m SWIR bands harmonized to 10 m via bilinear interpolation.</p>
+        <p>We trained a regularized 4-block CNN (<code>MultispectralCNN</code>, ~617k parameters) under <code>BCEWithLogitsLoss</code> and conducted a controlled band ablation comparing visible RGB (M1), visible plus NIR (M2), and full multispectral inputs (M3). At standard threshold T=0.5, <strong>M2 achieved the highest overall performance</strong> (Macro-F1 0.7110, Micro-F1 0.8205, Exact Match 38.0%), outperforming baseline M1 on the observed test metrics (Macro-F1 0.5978, Micro-F1 0.7403, Exact Match 12.0%). NIR provided a decisive +11.32 percentage point gain, resolving woody scrub confusion (Shrub F1 jumped from 0.3529 to 0.9114) and water delineation (F1 0.8947). Conversely, M3 underperformed M2 (Macro-F1 0.5673, Exact Match 5.0%), with small-sample dimensionality, resampling, and optimization instability as possible contributing factors to grassland commission errors (57 false positives). Furthermore, all models recorded 0.0000 F1 on Wetland at T=0.5 and validation-tuned T*=0.5 due to extreme training imbalance (only 8 positive training patches).</p>
+    </div>
+
+    <h2>1. Introduction</h2>
+    <h3>1.1 The Imperative for Satellite Land-Cover Mapping</h3>
+    <p>Automated, high-fidelity land-use and land-cover (LULC) identification from spaceborne sensors is essential for tracking urbanization, deforestation, crop phenology, and water resources. Modern multispectral instruments, notably ESA's Sentinel-2 constellation, offer high radiometric resolution, 5-day revisit cycles, and broad coverage across visible, near-infrared (NIR), and shortwave-infrared (SWIR) wavelengths.</p>
+
+    <h3>1.2 Limitations of Single-Label Classification</h3>
+    <p>In standard remote sensing classification, each observation unit is forced into an exclusive class: <em>y</em> &isin; {1, 2, ..., <em>K</em>}. However, at typical patch dimensions (1.2 km &times; 1.2 km, 120 &times; 120 pixels at 10 m resolution), genuine earth surfaces are inherently heterogeneous. Within a single patch, one frequently observes cultivated fields adjacent to farmhouse clusters, a stream flowing past pastures, or dense woodland fringing scrubland. Single-label classification arbitrarily suppresses subordinate classes or fails on mixed pixels.</p>
+
+    <div class="page-footer">Technical Report | Mandala Sai Charan (24JE1093) | Page 1</div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- PAGE 2 -->
+<!-- ===================================================================== -->
+<div class="page">
+    <h3>1.3 Multi-Label Formulation</h3>
+    <p>To model landscape complexity without artificial mutual exclusivity, the ground truth for each patch is structured as a binary multi-hot vector:</p>
+    <div class="math-eq"><strong>y</strong> = [y<sub>1</sub>, y<sub>2</sub>, ..., y<sub>K</sub>]<sup>T</sup> &isin; {0, 1}<sup>K</sup></div>
+    <p>where <em>y<sub>k</sub> = 1</em> denotes the presence of land-cover category <em>k</em>, and <em>y<sub>k</sub> = 0</em> denotes its absence. Under this formulation, multiple labels can legitimately evaluate to 1 simultaneously. In our curated dataset, <strong>94.4% of patches contain &ge; 2 co-occurring classes</strong> (mean: 3.00 classes per patch; test mean: 3.07).</p>
+
+    <h3>1.4 Central Research Questions</h3>
+    <ol>
+        <li><em>Can visible, NIR, and SWIR Sentinel-2 observations accurately identify multiple co-occurring surface types in complex landscapes?</em></li>
+        <li><em>Does adding NIR (B08) and SWIR (B11, B12) consistently improve classification accuracy over standard visible RGB, and how does spectral dimensionality interact with small training sample sizes?</em></li>
+    </ol>
+
+    <h2>2. Dataset and Spectral Bands</h2>
+    <h3>2.1 The BigEarthNet v2.0 (reBEN) Dataset</h3>
+    <p>We employ the open-access BigEarthNet v2.0 benchmark archive (Clasen et al., 2024; Sumbul et al., 2019, 2021; bigearth.net), released by the Remote Sensing Image Analysis (RSiM) and DIMA groups at Technische Universit&auml;t Berlin. BigEarthNet v2.0 represents a major scientific upgrade over legacy v1.0:</p>
+    <ul>
+        <li><strong>Atmospheric Correction:</strong> All Sentinel-2 tiles are processed to Level-2A Bottom-Of-Atmosphere (BOA) surface reflectance via <code>sen2cor v2.11</code>.</li>
+        <li><strong>Label Integrity:</strong> Ground truth labels were re-extracted using the CORINE Land Cover 2018 database (<code>CLC2018 v2020_u1</code>).</li>
+        <li><strong>Official Benchmark Splits:</strong> Partitions preserve official BigEarthNet v2.0 benchmark split assignments.</li>
+    </ul>
+
+    <h3>2.2 Geographic Provenance & Dataset Partitions</h3>
+    <p>To enable rigorous, fully reproducible model training and Colab compatibility without downloading the prohibitive 59 GiB archive, we curated a genuine 500-patch dataset from the first tile in BigEarthNet: <strong>Tile T33UUP</strong>, situated in the <strong>Austrian Central Alps</strong> (UTM Zone 33N).</p>
+    <ul>
+        <li><strong>Landscape Context:</strong> Alpine and sub-alpine topography (coniferous and mixed forests, managed pastures, agricultural valleys, settlements, mountain streams).</li>
+        <li><strong>Official Split Assignments:</strong> 300 Train (60.0%), 100 Validation (20.0%), 100 Test (20.0%).</li>
+        <li><strong>Patch-Level Disjointness:</strong> Strictly disjoint partitions (Train &cap; Val = 0, Train &cap; Test = 0, Val &cap; Test = 0).</li>
+        <li><strong>Inspection Patch Protocol:</strong> All 5 Phase 1 inspection patches (<code>T33UUP_26_57</code>, <code>27_55</code>, <code>27_56</code>, <code>27_57</code>, <code>27_58</code>) reside strictly in the Test split.</li>
+        <li><strong>Distinction from Geographic Independence:</strong> Because all 500 patches originate from Tile T33UUP, patches share regional terrain, atmospheric overpass, and phenology. The protocol guarantees patch-level disjointness but does not constitute geographic independence across regions.</li>
+    </ul>
+
+    <div class="page-footer">Technical Report | Mandala Sai Charan (24JE1093) | Page 2</div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- PAGE 3 -->
+<!-- ===================================================================== -->
+<div class="page">
+    <h3>2.3 Selected Sentinel-2 Spectral Bands</h3>
+    <p>Consistent with project requirements, six diagnostic Sentinel-2 spectral bands were retained across the visible, near-infrared, and shortwave-infrared spectra:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Band</th>
+                <th>Spectral Region</th>
+                <th>Central &lambda;</th>
+                <th>Bandwidth</th>
+                <th>Native Res.</th>
+                <th>Physical Remote Sensing Role</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>B02</strong></td>
+                <td>Blue</td>
+                <td>490 nm</td>
+                <td>65 nm</td>
+                <td>10 m</td>
+                <td>Atmospheric penetration; water body clarity; soil vs. vegetation contrast</td>
+            </tr>
+            <tr>
+                <td><strong>B03</strong></td>
+                <td>Green</td>
+                <td>560 nm</td>
+                <td>35 nm</td>
+                <td>10 m</td>
+                <td>Chlorophyll green peak; assesses general vegetative vigor</td>
+            </tr>
+            <tr>
+                <td><strong>B04</strong></td>
+                <td>Red</td>
+                <td>665 nm</td>
+                <td>30 nm</td>
+                <td>10 m</td>
+                <td>Chlorophyll-a absorption maximum; defines base of red-edge</td>
+            </tr>
+            <tr>
+                <td><strong>B08</strong></td>
+                <td>NIR (Broad)</td>
+                <td>842 nm</td>
+                <td>115 nm</td>
+                <td>10 m</td>
+                <td>Spongy mesophyll leaf scattering (vegetation plateau); water absorption</td>
+            </tr>
+            <tr>
+                <td><strong>B11</strong></td>
+                <td>SWIR-1</td>
+                <td>1610 nm</td>
+                <td>90 nm</td>
+                <td>20 m</td>
+                <td>Foliar moisture absorption; soil moisture; built-up roof differentiation</td>
+            </tr>
+            <tr>
+                <td><strong>B12</strong></td>
+                <td>SWIR-2</td>
+                <td>2190 nm</td>
+                <td>180 nm</td>
+                <td>20 m</td>
+                <td>Mineral background; dry non-photosynthetic biomass; soil silica</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>The multispectral input tensor is structured as: <strong>X</strong> &isin; &Ropf;<sup>C &times; 120 &times; 120</sup>, where <em>C &isin; {3, 4, 6}</em>.</p>
+
+    <h3>2.4 CORINE Land Cover Classes and Broad Mapping Scheme</h3>
+    <p>BigEarthNet provides 19 detailed CORINE Land Cover classes. In this experiment, 18 classes are mapped into seven broad land-cover categories, while ‘Beaches, dunes, sands’ is excluded because no instances occur in tile T33UUP.</p>
+
+<pre>
+1. Forest:
+   └── Broad-leaved forest, Coniferous forest, Mixed forest
+2. Agriculture:
+   └── Arable land, Permanent crops, Complex cultivation patterns,
+       Land principally occupied by agriculture, Agro-forestry areas
+3. Grassland / Pasture:
+   └── Pastures, Natural grassland and sparsely vegetated areas
+4. Built-up / Artificial Surfaces:
+   └── Urban fabric, Industrial or commercial units
+5. Water:
+   └── Inland waters, Marine waters
+6. Wetland:
+   └── Inland wetlands, Coastal wetlands
+7. Shrub / Transitional Vegetation:
+   └── Transitional woodland, shrub, Moors, heathland and sclerophyllous vegetation
+[Excluded - Bare Natural]:
+   └── Beaches, dunes, sands (0 instances in Tile T33UUP)
+</pre>
+
+    <div class="page-footer">Technical Report | Mandala Sai Charan (24JE1093) | Page 3</div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- PAGE 4 -->
+<!-- ===================================================================== -->
+<div class="page">
+    <h3>2.5 Preprocessing and Harmonization Pipeline</h3>
+    <p>Raw Sentinel-2 Level-2A GeoTIFFs provide 16-bit integer Digital Numbers (DN). Preprocessing transforms raw files into harmonized physical tensors:</p>
+    <ol>
+        <li><strong>Bilinear Spatial Resampling:</strong> Bands B11 and B12 have a native resolution of 20 m (60 &times; 60 pixels). We resample them to the 10 m working grid (120 &times; 120 pixels) using <strong>bilinear interpolation</strong> (<code>PIL.Image.BILINEAR</code>, order=1). Bilinear interpolation computes distance-weighted averages of four adjacent pixel centers, generating smooth continuous spatial gradients without ringing artifacts (unlike bicubic) or artificial blocky steps (unlike nearest neighbor).</li>
+        <li><strong>Radiometric Scaling to Surface Reflectance:</strong> In accordance with the ESA Sentinel-2 L2A product specification, surface reflectance &rho; is quantified as DN = 10,000 &times; &rho;. We apply:
+            <div class="math-eq">&rho; = clip(DN / 10,000.0, 0.0, 1.0)</div>
+            Division by 10,000 converts raw DN to Bottom-Of-Atmosphere surface reflectance. Clipping to [0.0, 1.0] handles rare specular glint highlights (e.g., solar reflections on glass roofs, greenhouse panels, or calm water surfaces &gt; 10,000 DN, representing &lt; 0.0042% of all pixels).
+        </li>
+        <li><strong>Preservation of Raw Data:</strong> All raw GeoTIFF files remain completely unmodified in <code>data/curated_patches/</code>. Preprocessed tensors are saved in compressed archive <code>data/curated_dataset_phase2_1.npz</code> (76.66 MB).</li>
+    </ol>
+
+    <h2>3. Exploratory Data Analysis & Visualizations</h2>
+    <h3>3.1 True-Colour and False-Colour Composites</h3>
+    <p>Multi-band imagery allows composite visualization revealing distinct physical properties:</p>
+    <ul>
+        <li><strong>True-Colour (B04-B03-B02):</strong> Simulates human vision. Agricultural fields show pale greens and yellows; forest canopies appear deep green; built-up roofs appear gray/white; deep water appears dark blue.</li>
+        <li><strong>Color-Infrared CIR (B08-B04-B03):</strong> NIR is mapped to Red, Red to Green, Green to Blue. Healthy vegetation canopy reflects intensely in NIR (&ge; 842 nm) due to spongy mesophyll scattering, popping out as brilliant scarlet red. Liquid water strongly absorbs NIR, rendering water bodies as jet black.</li>
+        <li><strong>SWIR Composite (B12-B08-B04):</strong> Differentiates soil moisture, urban fabric, and dry biomass.</li>
+    </ul>
+
+    <h3>3.2 Label Frequencies and Class Distribution</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Target Class Name</th>
+                <th>Train (N=300)</th>
+                <th>Val (N=100)</th>
+                <th>Test (N=100)</th>
+                <th>Total (N=500)</th>
+                <th>Prevalence</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Forest</strong></td><td>258 (86.0%)</td><td>84 (84.0%)</td><td>95 (95.0%)</td><td>437</td><td>87.4%</td></tr>
+            <tr><td><strong>Agriculture</strong></td><td>142 (47.3%)</td><td>74 (74.0%)</td><td>52 (52.0%)</td><td>268</td><td>53.6%</td></tr>
+            <tr><td><strong>Grassland / Pasture</strong></td><td>209 (69.7%)</td><td>75 (75.0%)</td><td>39 (39.0%)</td><td>323</td><td>64.6%</td></tr>
+            <tr><td><strong>Built-up / Artificial</strong></td><td>130 (43.3%)</td><td>58 (58.0%)</td><td>31 (31.0%)</td><td>219</td><td>43.8%</td></tr>
+            <tr><td><strong>Water</strong></td><td>41 (13.7%)</td><td>28 (28.0%)</td><td>21 (21.0%)</td><td>90</td><td>18.0%</td></tr>
+            <tr class="highlight-row"><td><strong>Wetland [RARE]</strong></td><td>8 (2.7%)</td><td>16 (16.0%)</td><td>27 (27.0%)</td><td>51</td><td>10.2%</td></tr>
+            <tr><td><strong>Shrub / Transitional</strong></td><td>59 (19.7%)</td><td>13 (13.0%)</td><td>42 (42.0%)</td><td>114</td><td>22.8%</td></tr>
+        </tbody>
+    </table>
+
+    <div class="page-footer">Technical Report | Mandala Sai Charan (24JE1093) | Page 4</div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- PAGE 5 -->
+<!-- ===================================================================== -->
+<div class="page">
+    <h3>3.3 Multi-Label Co-Occurrence Patterns & Spectral Signatures</h3>
+    <p>In our Austrian alpine dataset, co-occurring pairs highlight common ecological mosaics:</p>
+    <ul>
+        <li><strong>Forest + Grassland/Pasture:</strong> The most frequent pairing, characteristic of alpine pastureland bordered by montane spruce and mixed woods.</li>
+        <li><strong>Agriculture + Grassland:</strong> Dominant in valley bottoms where cultivated forage parcels and permanent pastures form fine-grained mosaics.</li>
+        <li><strong>Agriculture + Built-up:</strong> Ubiquitous across rural settlements, villages, and farm outbuildings.</li>
+    </ul>
+    <p>Spectral profiles across the 6 bands demonstrate distinct physical characteristics:</p>
+    <ul>
+        <li><strong>Forest:</strong> Strong chlorophyll absorption in Red (B04 ~0.02), a steep red-edge jump to NIR (B08 ~0.38), and moderate SWIR reflectance (B11 ~0.18, B12 ~0.09).</li>
+        <li><strong>Water:</strong> Low overall reflectance, with sharp absorption falling to near-zero in NIR and SWIR.</li>
+        <li><strong>Built-up:</strong> Monotonically rising reflectance across visible into SWIR without the characteristic red-edge peak.</li>
+        <li><strong>Agriculture vs. Grassland:</strong> Both display vegetative red-edge curves; actively fertilized arable crops display higher NIR peaks, while pastures display higher visible soil background when grazed.</li>
+        <li><strong>Wetland & Shrub:</strong> Wetlands combine foliar greenness with high SWIR water absorption; shrubs show intermediate NIR reflectance, lower than mature dense forest canopy due to open structure.</li>
+    </ul>
+
+    <h2>4. Methodology: Multi-Label Deep Learning</h2>
+    <h3>4.1 Multi-Label Problem Formulation</h3>
+    <p>Let <strong>X</strong> &isin; &Ropf;<sup>C &times; 120 &times; 120</sup> represent an input patch. The neural network computes unconstrained raw logits <strong>z</strong> = [z<sub>1</sub>, ..., z<sub>K</sub>]<sup>T</sup> &isin; &Ropf;<sup>7</sup>. Unlike multi-class softmax classification, multi-label learning models each class as an independent Bernoulli trial. Independent class probabilities are produced via the standard logistic sigmoid function:</p>
+    <div class="math-eq">p&#770;<sub>k</sub> = &sigma;(z<sub>k</sub>) = 1 / (1 + e<sup>-z<sub>k</sub></sup>) &isin; [0, 1]</div>
+
+    <h3>4.2 Network Architecture: MultispectralCNN</h3>
+    <p>We designed <code>MultispectralCNN</code> in <code>src/model.py</code> to extract spatial-spectral features without excessive parameterization:</p>
+    <ul>
+        <li><strong>Input:</strong> Accepts <em>C &isin; {3, 4, 6}</em> channels at 120 &times; 120 resolution.</li>
+        <li><strong>Block 1 (120&times;120 &rarr; 60&times;60):</strong> Conv2d(C&rarr;32, 3&times;3) + BN + ReLU + Conv2d(32&rarr;32, 3&times;3) + BN + ReLU + MaxPool2d(2, 2)</li>
+        <li><strong>Block 2 (60&times;60 &rarr; 30&times;30):</strong> Conv2d(32&rarr;64, 3&times;3) + BN + ReLU + Conv2d(64&rarr;64, 3&times;3) + BN + ReLU + MaxPool2d(2, 2)</li>
+        <li><strong>Block 3 (30&times;30 &rarr; 15&times;15):</strong> Conv2d(64&rarr;128, 3&times;3) + BN + ReLU + Conv2d(128&rarr;128, 3&times;3) + BN + ReLU + MaxPool2d(2, 2)</li>
+        <li><strong>Block 4 (15&times;15 &rarr; 7&times;7):</strong> Conv2d(128&rarr;256, 3&times;3) + BN + ReLU + MaxPool2d(2, 2)</li>
+        <li><strong>Global Pooling & Head:</strong> <code>AdaptiveAvgPool2d((1, 1))</code> &rarr; Flatten &rarr; Dropout(0.4) &rarr; Linear(256&rarr;128) &rarr; ReLU &rarr; Dropout(0.3) &rarr; Linear(128&rarr;7).</li>
+        <li><strong>Trainable Parameters:</strong> M1: 616,679; M2: 616,967; M3: 617,543.</li>
+    </ul>
+
+    <div class="page-footer">Technical Report | Mandala Sai Charan (24JE1093) | Page 5</div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- PAGE 6 -->
+<!-- ===================================================================== -->
+<div class="page">
+    <h3>4.3 Training Protocols and Optimization</h3>
+    <p>Models were trained on the 300-patch training split using reproducible settings:</p>
+    <ul>
+        <li><strong>Loss Function:</strong> Binary Cross-Entropy with Logits (<code>BCEWithLogitsLoss</code>).</li>
+        <li><strong>Optimizer:</strong> <code>AdamW</code> (learning rate = 1.0 &times; 10<sup>-3</sup>, weight decay = 1.0 &times; 10<sup>-4</sup>).</li>
+        <li><strong>LR Schedule:</strong> <code>CosineAnnealingLR</code> (T<sub>max</sub> = 35, &eta;<sub>min</sub> = 1.0 &times; 10<sup>-5</sup>).</li>
+        <li><strong>Batch Size:</strong> 16 (yielding 19 parameter updates per epoch).</li>
+        <li><strong>Early Stopping:</strong> Monitored on validation loss with patience of 8 epochs (restored best checkpoint).</li>
+        <li><strong>Reproducibility:</strong> Random seed 42 fixed for Python, NumPy, and PyTorch.</li>
+        <li><strong>Zero Test Leakage:</strong> Model weights, normalization statistics, and decision thresholds never touched test labels.</li>
+    </ul>
+
+    <h3>4.4 Multi-Label Loss and Decision Threshold Calibration</h3>
+    <p>Binary cross-entropy computes the average loss across all classes:</p>
+    <div class="math-eq">L<sub>BCE</sub>(<strong>z</strong>, <strong>y</strong>) = - (1/K) &sum;<sub>k=1</sub><sup>K</sup> [ y<sub>k</sub> log &sigma;(z<sub>k</sub>) + (1 - y<sub>k</sub>) log(1 - &sigma;(z<sub>k</sub>)) ]</div>
+    <p>Binary predictions y&#770;<sub>k</sub> &isin; {0, 1} are formed by applying a threshold vector <strong>T</strong> = [T<sub>1</sub>, ..., T<sub>7</sub>]:</p>
+    <div class="math-eq">y&#770;<sub>k</sub> = &Iopf;(p&#770;<sub>k</sub> &ge; T<sub>k</sub>)</div>
+    <p>We evaluate two thresholding protocols:</p>
+    <ol>
+        <li><strong>Standard Default Threshold (T<sub>k</sub> = 0.50):</strong> Canonical unbiased cutoff for logistic sigmoid.</li>
+        <li><strong>Validation-Calibrated Thresholds (T<sub>k</sub>*):</strong> Selected by grid search over T &isin; [0.20, 0.80] strictly on validation probabilities to maximize validation Macro-F1. <em>Test labels were never accessed during threshold selection.</em></li>
+    </ol>
+
+    <h3>4.5 Band Contribution Experiments</h3>
+    <p>To isolate spectral utility, three controlled models were trained under identical seeds, splits, and architectures:</p>
+    <ul>
+        <li><strong>M1 (Visible RGB):</strong> Channels [B02, B03, B04] (3 inputs; 490, 560, 665 nm)</li>
+        <li><strong>M2 (Visible + NIR):</strong> Channels [B02, B03, B04, B08] (4 inputs; + 842 nm)</li>
+        <li><strong>M3 (Full Multispectral):</strong> Channels [B02, B03, B04, B08, B11, B12] (6 inputs; + 1610, 2190 nm)</li>
+    </ul>
+
+    <div class="page-footer">Technical Report | Mandala Sai Charan (24JE1093) | Page 6</div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- PAGE 7 -->
+<!-- ===================================================================== -->
+<div class="page">
+    <h2>5. Experimental Results</h2>
+    <h3>5.1 Quantitative Performance Summary on Test Set (N=100)</h3>
+    <p>The models were evaluated on a held-out test set of 100 patches. Although the patch IDs are disjoint across the training, validation, and test splits, all patches originate from the same Sentinel-2 tile; therefore, geographic independence and cross-region generalization are not established. All metrics are transcribed directly from verified metrics in <code>outputs/metrics/phase3_model_comparison.csv</code>:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Evaluation Protocol</th>
+                <th>Model</th>
+                <th>Macro-F1</th>
+                <th>Micro-F1</th>
+                <th>Macro-Prec.</th>
+                <th>Macro-Rec.</th>
+                <th>Exact Match</th>
+                <th>Hamming Loss</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Standard (T=0.50)</strong></td>
+                <td><strong>M1 (RGB)</strong></td>
+                <td>0.5978</td>
+                <td>0.7403</td>
+                <td>0.7317</td>
+                <td>0.5588</td>
+                <td>12.0%</td>
+                <td>0.2014</td>
+            </tr>
+            <tr class="highlight-row">
+                <td><strong>Standard (T=0.50)</strong></td>
+                <td><strong>M2 (RGB+NIR)</strong></td>
+                <td><strong>0.7110</strong></td>
+                <td><strong>0.8205</strong></td>
+                <td><strong>0.7326</strong></td>
+                <td><strong>0.7036</strong></td>
+                <td><strong>38.0%</strong></td>
+                <td><strong>0.1500</strong></td>
+            </tr>
+            <tr>
+                <td><strong>Standard (T=0.50)</strong></td>
+                <td><strong>M3 (All Bands)</strong></td>
+                <td>0.5673</td>
+                <td>0.7081</td>
+                <td>0.6894</td>
+                <td>0.5666</td>
+                <td>5.0%</td>
+                <td>0.2486</td>
+            </tr>
+            <tr>
+                <td><em>Validation-Tuned</em></td>
+                <td>M1 (Tuned)</td>
+                <td>0.7076</td>
+                <td>0.8024</td>
+                <td>0.6648</td>
+                <td>0.7868</td>
+                <td>9.0%</td>
+                <td>0.1857</td>
+            </tr>
+            <tr>
+                <td><em>Validation-Tuned</em></td>
+                <td>M2 (Tuned)</td>
+                <td>0.7020</td>
+                <td>0.7928</td>
+                <td>0.6566</td>
+                <td>0.7886</td>
+                <td>7.0%</td>
+                <td>0.1971</td>
+            </tr>
+            <tr>
+                <td><em>Validation-Tuned</em></td>
+                <td>M3 (Tuned)</td>
+                <td>0.6559</td>
+                <td>0.7692</td>
+                <td>0.5939</td>
+                <td>0.7645</td>
+                <td>6.0%</td>
+                <td>0.2229</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p><em>Validation-Tuned Threshold Vectors:</em><br>
+    &bull; M1: [Fo: 0.30, Ag: 0.20, Gr: 0.40, Bu: 0.40, Wa: 0.30, We: 0.50, Sh: 0.20]<br>
+    &bull; M2: [Fo: 0.20, Ag: 0.20, Gr: 0.35, Bu: 0.30, Wa: 0.30, We: 0.50, Sh: 0.20]<br>
+    &bull; M3: [Fo: 0.45, Ag: 0.30, Gr: 0.45, Bu: 0.45, Wa: 0.20, We: 0.50, Sh: 0.20]</p>
+
+    <h3>5.2 Key Takeaways from Band Contributions</h3>
+    <ol>
+        <li><strong>The Decisive Role of NIR (B08):</strong> Adding NIR provided an immediate <strong>+11.32 percentage point surge</strong> in default-threshold Macro-F1 (0.5978 to 0.7110), while Micro-F1 reached 0.8205 and the Exact Match subset accuracy more than tripled from 12.0% to 38.0%. Shrub/Transitional Vegetation F1 surged from 0.3529 to 0.9114 (+55.85 pp) due to mesophyll scattering differences between open scrub and mature forest canopy. Water F1 jumped from 0.7429 to 0.8947 with 100% precision.</li>
+        <li><strong>Behavior of SWIR (B11, B12):</strong> On our curated 300-patch training split, M3 underperformed M2, achieving a Macro-F1 of 0.5673 compared with 0.7110 for M2 (Exact Match 5.0% vs 38.0%). M3 produced 57 false alarms on Grassland/Pasture (precision 40.0%). Small training-sample size, spectral collinearity, resampling effects, and optimization instability are possible explanations, but their individual contributions were not independently tested.</li>
+    </ol>
+
+    <div class="page-footer">Technical Report | Mandala Sai Charan (24JE1093) | Page 7</div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- PAGE 8 -->
+<!-- ===================================================================== -->
+<div class="page">
+    <h3>5.3 Complete Per-Class Performance Breakdown (T=0.50)</h3>
+    <p>Per-class precision, recall, F1-score, and confusion parameters transcribed directly from <code>outputs/metrics/phase3_per_class_metrics.csv</code>:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Model</th>
+                <th>Land-Cover Class</th>
+                <th>Support</th>
+                <th>Precision</th>
+                <th>Recall</th>
+                <th>F1-Score</th>
+                <th>TP</th>
+                <th>FP</th>
+                <th>FN</th>
+                <th>TN</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>M1</td><td>Forest</td><td>95</td><td>0.9588</td><td>0.9789</td><td>0.9688</td><td>93</td><td>4</td><td>2</td><td>1</td></tr>
+            <tr><td>M1</td><td>Agriculture</td><td>52</td><td>0.9444</td><td>0.6538</td><td>0.7727</td><td>34</td><td>2</td><td>18</td><td>46</td></tr>
+            <tr><td>M1</td><td>Grassland / Pasture</td><td>39</td><td>0.6604</td><td>0.8974</td><td>0.7609</td><td>35</td><td>18</td><td>4</td><td>43</td></tr>
+            <tr><td>M1</td><td>Built-up / Artificial</td><td>31</td><td>0.6296</td><td>0.5484</td><td>0.5862</td><td>17</td><td>10</td><td>14</td><td>59</td></tr>
+            <tr><td>M1</td><td>Water</td><td>21</td><td>0.9286</td><td>0.6190</td><td>0.7429</td><td>13</td><td>1</td><td>8</td><td>78</td></tr>
+            <tr class="highlight-row"><td>M1</td><td>Wetland</td><td>27</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>0</td><td>0</td><td>27</td><td>73</td></tr>
+            <tr><td>M1</td><td>Shrub / Transitional</td><td>42</td><td>1.0000</td><td>0.2143</td><td>0.3529</td><td>9</td><td>0</td><td>33</td><td>58</td></tr>
+            <tr style="border-top: 1.5pt solid #1e40af;"><td><strong>M2</strong></td><td>Forest</td><td>95</td><td>0.9688</td><td>0.9789</td><td>0.9738</td><td>93</td><td>3</td><td>2</td><td>2</td></tr>
+            <tr><td><strong>M2</strong></td><td>Agriculture</td><td>52</td><td>0.9512</td><td>0.7500</td><td><strong>0.8387</strong></td><td>39</td><td>2</td><td>13</td><td>46</td></tr>
+            <tr><td><strong>M2</strong></td><td>Grassland / Pasture</td><td>39</td><td>0.6727</td><td>0.9487</td><td><strong>0.7872</strong></td><td>37</td><td>18</td><td>2</td><td>43</td></tr>
+            <tr><td><strong>M2</strong></td><td>Built-up / Artificial</td><td>31</td><td>0.5625</td><td>0.5806</td><td>0.5714</td><td>18</td><td>14</td><td>13</td><td>55</td></tr>
+            <tr><td><strong>M2</strong></td><td>Water</td><td>21</td><td>1.0000</td><td>0.8095</td><td><strong>0.8947</strong></td><td>17</td><td>0</td><td>4</td><td>79</td></tr>
+            <tr class="highlight-row"><td><strong>M2</strong></td><td>Wetland</td><td>27</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>0</td><td>0</td><td>27</td><td>73</td></tr>
+            <tr><td><strong>M2</strong></td><td>Shrub / Transitional</td><td>42</td><td>0.9730</td><td>0.8571</td><td><strong>0.9114</strong></td><td>36</td><td>1</td><td>6</td><td>57</td></tr>
+            <tr style="border-top: 1.5pt solid #1e40af;"><td>M3</td><td>Forest</td><td>95</td><td>0.9592</td><td>0.9895</td><td><strong>0.9741</strong></td><td>94</td><td>4</td><td>1</td><td>1</td></tr>
+            <tr><td>M3</td><td>Agriculture</td><td>52</td><td>0.9000</td><td>0.6923</td><td>0.7826</td><td>36</td><td>4</td><td>16</td><td>44</td></tr>
+            <tr><td>M3</td><td>Grassland / Pasture</td><td>39</td><td>0.4000</td><td>0.9744</td><td>0.5672</td><td>38</td><td>57</td><td>1</td><td>4</td></tr>
+            <tr><td>M3</td><td>Built-up / Artificial</td><td>31</td><td>0.5667</td><td>0.5484</td><td>0.5574</td><td>17</td><td>13</td><td>14</td><td>56</td></tr>
+            <tr><td>M3</td><td>Water</td><td>21</td><td>1.0000</td><td>0.2857</td><td>0.4444</td><td>6</td><td>0</td><td>15</td><td>79</td></tr>
+            <tr class="highlight-row"><td>M3</td><td>Wetland</td><td>27</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>0</td><td>0</td><td>27</td><td>73</td></tr>
+            <tr><td>M3</td><td>Shrub / Transitional</td><td>42</td><td>1.0000</td><td>0.4762</td><td>0.6452</td><td>20</td><td>0</td><td>22</td><td>58</td></tr>
+        </tbody>
+    </table>
+
+    <div class="page-footer">Technical Report | Mandala Sai Charan (24JE1093) | Page 8</div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- PAGE 9 -->
+<!-- ===================================================================== -->
+<div class="page">
+    <h2>6. Error and Co-Occurrence Analysis</h2>
+    <h3>6.1 Diagnostic Breakdown of Test Predictions</h3>
+    <p>Test set predictions at standard threshold T=0.50 demonstrate:</p>
+    <ul>
+        <li><strong>Exact Match Ratio:</strong> <strong>38.0% in M2</strong>, <strong>12.0% in M1</strong>, and <strong>5.0% in M3</strong>.</li>
+        <li><strong>Grassland Commission Errors in M3:</strong> M3 predicted Grassland in 95 out of 100 test patches, generating 57 false alarms and collapsing precision to 40.0%.</li>
+        <li><strong>Water Omission Errors in M3:</strong> M3 missed 15 out of 21 water patches (recall 28.57%), down from 17 true positives in M2.</li>
+    </ul>
+
+    <h3>6.2 Analysis of Confusing Class Combinations</h3>
+    <h4>Case 1: Agriculture &harr; Grassland / Pasture</h4>
+    <p><strong>Ecological Overlap:</strong> Cultivated forage crops, fallow arable parcels, and permanent pastures share similar green leaf pigments and visual texture. In visible wavelengths, both exhibit nearly identical green peaks and red absorption troughs. In M1 and M2, exactly 18 non-grassland patches were falsely classified as Grassland.</p>
+
+    <h4>Case 2: Forest &harr; Transitional Woodland / Shrub</h4>
+    <p><strong>Ecological Overlap:</strong> Transitional vegetation represents an ecotone between open grassland and mature forest (young saplings, clear-cut regrowth, heathland). In visible bands, scrub mimics dense forest greenness (M1 F1=0.3529). In NIR, canopy micro-shadowing in mature forests attenuates reflectance relative to open multi-tiered scrub, enabling M2 to successfully resolve 36 of 42 shrub instances (M2 F1=0.9114).</p>
+
+    <h3>6.3 Detailed Wetland Classification Failure Analysis</h3>
+    <p>Across all three models at T=0.50, <strong>Wetland achieved an F1-score of exactly 0.0000</strong> (0 TP, 0 FP, 27 FN out of 27 positive test patches). We investigated the underlying mechanisms:</p>
+    <ul>
+        <li><strong>Severe Training Imbalance (2.7% Prevalence):</strong> In tile T33UUP, the training split furnished only <strong>8 positive Wetland patches out of 300</strong> (292 negatives, 97.3%).</li>
+        <li><strong>Loss Function Dynamics:</strong> Under unweighted Binary Cross-Entropy loss, misclassifying 8 positive patches contributes very little gradient signal compared to avoiding false alarms on 292 negative patches. Consequently, the network learned that outputting strongly negative logits for Wetland (z &isin; [-3.5, -0.8]) minimized overall loss.</li>
+        <li><strong>Threshold Calibration Procedure:</strong> Candidate thresholds were swept over T &isin; [0.20, 0.80] strictly on validation set predictions. Because validation F1 remained 0.0000 across all candidate thresholds, the optimization algorithm retained T*=0.50 as the selected threshold. On the test set, predictions at T*=0.50 yielded 0 TP and 27 FN (F1 = 0.0000).</li>
+    </ul>
+
+    <div class="page-footer">Technical Report | Mandala Sai Charan (24JE1093) | Page 9</div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- PAGE 10 -->
+<!-- ===================================================================== -->
+<div class="page">
+    <h2>7. Conclusions and Limitations</h2>
+    <h3>7.1 Conclusions</h3>
+    <ol>
+        <li><strong>Multi-label recognition is essential:</strong> In our curated dataset, <strong>94.4% of Sentinel-2 patches</strong> contain co-occurring land covers (mean: 3.00 classes per patch; test mean: 3.07).</li>
+        <li><strong>NIR (B08) provides the decisive performance boost:</strong> Adding NIR in M2 increased default-threshold Macro-F1 by <strong>+11.32 percentage points</strong> (0.5978 to 0.7110), boosted Exact Match from 12% to 38%, and resolved woody scrub confusion (Shrub F1 surging from 0.3529 to 0.9114).</li>
+        <li><strong>Interpretation of M3 Performance:</strong> M2 performed best on this curated test set at the default threshold of 0.5. M3 underperformed M2, achieving a Macro-F1 of 0.5673 compared with 0.7110 for M2. Small training-sample size, spectral collinearity, resampling effects, and optimization instability are possible explanations, but their individual contributions were not independently tested.</li>
+        <li><strong>Minority classes require dedicated loss weighting:</strong> Extreme training imbalance (8 Wetland patches) causes zero-recall failure under unweighted BCE loss.</li>
+    </ol>
+
+    <h3>7.2 Practical Limitations</h3>
+    <ul>
+        <li><strong>Single-Tile Scope and Spatial Autocorrelation:</strong> All 500 patches originate from Tile T33UUP in the Austrian Alps. The splits guarantee patch-level disjointness but not geographic independence.</li>
+        <li><strong>Intentional Class-Selection Bias:</strong> Capturing 100% of the tile's Wetland and Shrub patches enriched their prevalence (10.2% and 22.8%) relative to natural landscape baselines (1.6% and 3.6%).</li>
+    </ul>
+
+    <h3>7.3 Future Improvements</h3>
+    <ul>
+        <li><strong>Positive-Class Weighting / Focal Loss:</strong> Apply positive class weights (w<sub>pos</sub> = N<sub>neg</sub> / N<sub>pos</sub>) to penalize minority-class omissions.</li>
+        <li><strong>Multispectral Transfer Learning:</strong> Pretrain the CNN backbone on continental-scale archives before fine-tuning on regional tiles.</li>
+        <li><strong>Guided Super-Resolution:</strong> Downscale SWIR bands using 10 m visible band spatial guidance rather than unguided bilinear interpolation.</li>
+    </ul>
+
+    <h2>8. References</h2>
+    <ol style="font-size: 8pt; padding-left: 14pt;">
+        <li><strong>Clasen, K., Sedona, R., Demir, B., et al.</strong> (2024). <em>reBEN: Refining the BigEarthNet Benchmark Archive for Remote Sensing Image Understanding</em>. arXiv:2407.03653.</li>
+        <li><strong>Sumbul, G., Charfuelan, M., de Wall, B., et al.</strong> (2019). <em>BigEarthNet: A Large-Scale Benchmark Archive for Remote Sensing Image Understanding</em>. IEEE IGARSS 2019, pp. 5901–5904.</li>
+        <li><strong>Sumbul, G., de Wall, B., Kreuziger, T., et al.</strong> (2021). <em>BigEarthNet-MM: A Large-Scale, Multimodal, Multilabel Benchmark Archive</em>. IEEE GRSM, 9(3), pp. 174–180.</li>
+        <li><strong>European Space Agency (ESA).</strong> (2021). <em>Sentinel-2 User Handbook</em>. Ref: EOP-SM/1476/SR-dr, Iss. 1, Rev. 2.</li>
+        <li><strong>European Environment Agency (EEA).</strong> (2019). <em>CORINE Land Cover (CLC) 2018 Technical Guidelines</em>. Report No. 17/2019.</li>
+        <li><strong>Main-Knorn, M., Pflug, B., Louis, J., et al.</strong> (2017). <em>Sen2Cor for Sentinel-2</em>. SPIE Proc. 10427, 1042704.</li>
+        <li><strong>Paszke, A., Gross, S., Massa, F., et al.</strong> (2019). <em>PyTorch: An Imperative Style Deep Learning Library</em>. NeurIPS 2019, pp. 8024–8035.</li>
+        <li><strong>Pedregosa, F., Varoquaux, G., Gramfort, A., et al.</strong> (2011). <em>Scikit-learn: Machine Learning in Python</em>. JMLR, 12, pp. 2825–2830.</li>
+    </ol>
+
+    <div class="page-footer">Technical Report | Mandala Sai Charan (24JE1093) | Page 10</div>
+</div>
+
+</body>
+</html>
+"""
+
+    html_file = os.path.abspath("scratch/report_print.html")
+    with open(html_file, "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+    chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+    if not os.path.exists(chrome_path):
+        chrome_path = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+
+    pdf_target = os.path.abspath("report/final_project_report.pdf")
+
+    cmd = [
+        chrome_path,
+        "--headless",
+        "--disable-gpu",
+        "--no-pdf-header-footer",
+        f"--print-to-pdf={pdf_target}",
+        html_file
+    ]
+
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    if res.returncode != 0:
+        print(f"Error running Chrome: {res.stderr}")
+        return False
+
+    if os.path.exists(pdf_target):
+        # Read page count
+        reader = pypdf.PdfReader(pdf_target)
+        pages = len(reader.pages)
+        print(f"Generated {pdf_target} with {pages} pages.")
+        return pages == 10
+
+    return False
+
+if __name__ == "__main__":
+    success = generate_pdf()
+    print("Success (10 pages):", success)
